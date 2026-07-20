@@ -40,7 +40,7 @@ class AuthenticatedSessionController extends Controller
         case 'Administrateur':
             return redirect()->route('admin.dashboard');
 
-        case 'Responsable Technique':
+        case 'Responsable technique':
             return redirect()->route('manager.dashboard');
 
         case 'Technicien':

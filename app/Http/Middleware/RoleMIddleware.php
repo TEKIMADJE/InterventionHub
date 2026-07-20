@@ -17,7 +17,7 @@ class RoleMiddleware
             return redirect()->route('login');
         }
 
-        if ($request->user()->role->nom !== $role) {
+        if (!$request->user()->role || $request->user()->role->nom !== $role) {
             abort(403, 'Accès refusé.');
         }
 
