@@ -11,7 +11,11 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InterventionController;
 
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
-
+use App\Http\Controllers\Technician\DashboardController as TechnicianDashboardController;
+use App\Http\Controllers\Technician\InterventionController as TechnicianInterventionController;
+use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\InterventionController as ClientInterventionController;
+use App\Http\Controllers\Manager\InterventionController as ManagerInterventionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -52,9 +56,9 @@ Route::middleware(['auth', 'role:Responsable technique'])
 
 
         Route::resource(
-            'interventions',
-            \App\Http\Controllers\Manager\InterventionController::class
-        )
+                'interventions',
+                ManagerInterventionController::class
+                )
         ->only([
             'index',
             'show',
@@ -67,20 +71,45 @@ Route::middleware(['auth', 'role:Responsable technique'])
 
 // TECHNICIEN
 Route::middleware(['auth', 'role:Technicien'])
-    ->get('/technician/dashboard', function () {
+    ->prefix('technician')
+    ->name('technician.')
+    ->group(function () {
 
-        return Inertia::render('Technician/Dashboard');
+        Route::get('/dashboard', [TechnicianDashboardController::class, 'index'])
+            ->name('dashboard');
 
-    })->name('technician.dashboard');
+
+        Route::resource(
+            'interventions',
+            TechnicianInterventionController::class
+        )
+        ->only([
+            'index',
+            'show',
+            'update'
+        ]);
+
+    });
 
 
 // CLIENT
 Route::middleware(['auth', 'role:Client'])
-    ->get('/client/dashboard', function () {
+    ->prefix('client')
+    ->name('client.')
+    ->group(function () {
 
-        return Inertia::render('Client/Dashboard');
+        Route::get('/dashboard', [ClientDashboardController::class, 'index'])
+            ->name('dashboard');
 
-    })->name('client.dashboard');
+        Route::resource('interventions', ClientInterventionController::class)
+    ->only([
+        'index',
+        'create',
+        'store',
+        'show'
+    ]);
+
+    });
 
 
 

@@ -1,11 +1,10 @@
-import ManagerLayout from '@/Layouts/ManagerLayout';
+import ClientLayout from '@/Layouts/ClientLayout';
 import { Head, Link } from '@inertiajs/react';
 
-function Index({ interventions }) {
-
+export default function Index({ interventions }) {
     return (
         <>
-            <Head title="Interventions à traiter" />
+            <Head title="Mes interventions" />
 
             <div className="p-6">
 
@@ -13,13 +12,20 @@ function Index({ interventions }) {
 
                     <div>
                         <h1 className="text-3xl font-bold">
-                            Interventions
+                            Mes interventions
                         </h1>
 
                         <p className="text-gray-500">
-                            Gestion des interventions à traiter
+                            Liste de toutes vos demandes
                         </p>
                     </div>
+
+                    <Link
+                        href={route('client.interventions.create')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                    >
+                        + Nouvelle demande
+                    </Link>
 
                 </div>
 
@@ -30,15 +36,12 @@ function Index({ interventions }) {
                         <thead className="bg-gray-100">
 
                             <tr>
-
                                 <th className="p-3 text-left">Référence</th>
                                 <th className="p-3 text-left">Titre</th>
-                                <th className="p-3 text-left">Client</th>
-                                <th className="p-3 text-left">Technicien</th>
-                                <th className="p-3 text-left">Priorité</th>
+                                <th className="p-3 text-left">Catégorie</th>
                                 <th className="p-3 text-left">Statut</th>
+                                <th className="p-3 text-left">Technicien</th>
                                 <th className="p-3 text-center">Action</th>
-
                             </tr>
 
                         </thead>
@@ -61,32 +64,24 @@ function Index({ interventions }) {
                                     </td>
 
                                     <td className="p-3">
-                                        {intervention.client?.name}
-                                    </td>
-
-                                    <td className="p-3">
-
-                                        {intervention.technician
-                                            ? intervention.technician.name
-                                            : "Non affecté"}
-
-                                    </td>
-
-                                    <td className="p-3">
-                                        {intervention.priority?.nom}
+                                        {intervention.category?.nom}
                                     </td>
 
                                     <td className="p-3">
                                         {intervention.status?.nom}
                                     </td>
 
+                                    <td className="p-3">
+                                        {intervention.technician?.name ?? "Non affecté"}
+                                    </td>
+
                                     <td className="p-3 text-center">
 
                                         <Link
-                                            href={`/manager/interventions/${intervention.id}`}
+                                            href={route('client.interventions.show', intervention.id)}
                                             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                                         >
-                                            Gérer
+                                            Voir
                                         </Link>
 
                                     </td>
@@ -105,9 +100,9 @@ function Index({ interventions }) {
         </>
     );
 }
+
 Index.layout = page => (
-    <ManagerLayout>
+    <ClientLayout>
         {page}
-    </ManagerLayout>
+    </ClientLayout>
 );
-export default Index;

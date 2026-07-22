@@ -12,7 +12,12 @@ return [
     | other UI elements where an application name needs to be displayed.
     |
     */
-
+    'company' => [
+    'name' => env('COMPANY_NAME', 'Medyouin'),
+    'phone' => env('COMPANY_PHONE'),
+    'email' => env('COMPANY_EMAIL'),
+    'address' => env('COMPANY_ADDRESS'),
+    ],
     'name' => env('APP_NAME', 'Laravel'),
 
     /*

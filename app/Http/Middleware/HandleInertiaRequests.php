@@ -34,6 +34,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'company' => [
+                'name' => env('COMPANY_NAME', 'InterventionHub'),
+                'phone' => env('COMPANY_PHONE'),
+                'email' => env('COMPANY_EMAIL'),
+                'address' => env('COMPANY_ADDRESS'),
+            ],
         ];
     }
 }
