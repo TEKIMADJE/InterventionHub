@@ -3,63 +3,96 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Intervention;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+    public function store(
+        Request $request,
+        Intervention $intervention
+    ) {
+        abort_unless(
+            $this->canAccess($request->user(), $intervention),
+            403,
+            'Vous ne pouvez pas commenter cette intervention.'
+        );
+
+        $validated = $request->validate([
+            'contenu' => [
+                'required',
+                'string',
+                'max:2000',
+            ],
+        ]);
+
+        $intervention->comments()->create([
+            'user_id' => $request->user()->id,
+            'contenu' => $validated['contenu'],
+        ]);
+
+        return back()->with(
+            'success',
+            'Commentaire ajouté avec succès.'
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    public function destroy(
+        Request $request,
+        Comment $comment
+    ) {
+        $comment->loadMissing('intervention');
+
+        abort_unless(
+            $this->canAccess(
+                $request->user(),
+                $comment->intervention
+            ),
+            403
+        );
+
+        $user = $request->user();
+        $user->loadMissing('role');
+
+        $canDelete =
+            (int) $comment->user_id === (int) $user->id
+            || $user->role?->nom === 'Administrateur';
+
+        abort_unless(
+            $canDelete,
+            403,
+            'Vous ne pouvez pas supprimer ce commentaire.'
+        );
+
+        $comment->delete();
+
+        return back()->with(
+            'success',
+            'Commentaire supprimé.'
+        );
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+    private function canAccess(
+        User $user,
+        Intervention $intervention
+    ): bool {
+        $user->loadMissing('role');
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Comment $comment)
-    {
-        //
-    }
+        return match ($user->role?->nom) {
+            'Administrateur' => true,
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Comment $comment)
-    {
-        //
-    }
+            'Responsable technique' => true,
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Comment $comment)
-    {
-        //
-    }
+            'Technicien' =>
+                (int) $intervention->technician_id
+                === (int) $user->id,
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Comment $comment)
-    {
-        //
+            'Client' =>
+                (int) $intervention->client_id
+                === (int) $user->id,
+
+            default => false,
+        };
     }
 }

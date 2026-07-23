@@ -8,6 +8,7 @@ use App\Models\InterventionHistory;
 use App\Models\Status;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Notifications\InterventionNotification;
 
 class InterventionController extends Controller
 {
@@ -106,6 +107,7 @@ class InterventionController extends Controller
             'status',
             'histories.user',
             'attachments.user',
+            'comments.user.role',
         ]);
 
         $statuses = Status::orderBy('id')->get();
@@ -210,6 +212,26 @@ class InterventionController extends Controller
                     ? " | Compte rendu : {$solution}"
                     : ''),
         ]);
+
+        /*
+        * Notifier le client uniquement
+        * lorsque le statut change.
+        */
+        if ($ancienStatut !== $nouveauStatut->nom) {
+            $intervention->load('client');
+
+                if ($intervention->client) {
+                    $intervention->client->notify(
+                        new InterventionNotification(
+                            $intervention,
+                            'Statut de votre intervention modifié',
+                            "L’intervention {$intervention->reference} est maintenant au statut « {$nouveauStatut->nom} ».",
+                            "/client/interventions/{$intervention->id}",
+                            'status_change'
+                        )
+                    );
+                }
+        }
 
         return back()->with(
             'success',

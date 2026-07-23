@@ -121,6 +121,7 @@ public function show(Intervention $intervention)
         'status',
         'histories.user',
         'attachments.user',
+        'comments.user.role',
     ]);
 
     $technicians = \App\Models\User::whereHas(
@@ -150,6 +151,7 @@ public function edit(Intervention $intervention)
         'status',
         'histories.user',
         'attachments.user',
+        'comments.user.role',
     ]);
 
     $technicians = User::whereHas('role', function ($query) {
@@ -176,16 +178,26 @@ public function update(Request $request, Intervention $intervention)
         'status_id' => 'required|exists:statuses,id',
     ]);
 
-    $oldTechnician = $intervention->technician?->name ?? "Non affecté";
-    $oldStatus = $intervention->status?->nom ?? "Aucun";
-    $oldPriority = $intervention->priority?->nom ?? "Aucune";
     $oldTechnicianId = $intervention->technician_id;
+    $oldTechnician = $intervention->technician?->name ?? 'Non affecté';
+    $oldStatus = $intervention->status?->nom ?? 'Aucun';
+    $oldPriority = $intervention->priority?->nom ?? 'Aucune';
 
     $intervention->update($validated);
 
+    // Recharger les nouvelles relations après la modification
+    $intervention->load([
+        'technician',
+        'status',
+        'priority',
+        'attachments.user',
+        'comments.user.role',
+    ]);
+
+    // Notification uniquement si le technicien a changé
     if (
-        (int) $oldTechnicianId !==
-        (int) $intervention->technician_id && $intervention->technician
+        (int) $oldTechnicianId !== (int) $intervention->technician_id
+        && $intervention->technician
     ) {
         $intervention->technician->notify(
             new InterventionNotification(
@@ -197,43 +209,33 @@ public function update(Request $request, Intervention $intervention)
             )
         );
     }
-    $intervention->load([
-        'technician',
-        'status',
-        'priority',
-        'attachments.user',
-    ]);
 
+    $newTechnician = $intervention->technician?->name ?? 'Non affecté';
+    $newStatus = $intervention->status?->nom ?? 'Aucun';
+    $newPriority = $intervention->priority?->nom ?? 'Aucune';
 
-    $details = "";
+    $details = '';
 
-
-    if ($oldTechnician !== ($intervention->technician?->name ?? "Non affecté")) {
-        $details .= "Technicien : $oldTechnician → {$intervention->technician->name}. ";
+    if ($oldTechnician !== $newTechnician) {
+        $details .= "Technicien : {$oldTechnician} → {$newTechnician}. ";
     }
 
-
-    if ($oldStatus !== $intervention->status->nom) {
-        $details .= "Statut : $oldStatus → {$intervention->status->nom}. ";
+    if ($oldStatus !== $newStatus) {
+        $details .= "Statut : {$oldStatus} → {$newStatus}. ";
     }
 
-
-    if ($oldPriority !== $intervention->priority->nom) {
-        $details .= "Priorité : $oldPriority → {$intervention->priority->nom}. ";
+    if ($oldPriority !== $newPriority) {
+        $details .= "Priorité : {$oldPriority} → {$newPriority}. ";
     }
 
-
-    if ($details !== "") {
-
+    if ($details !== '') {
         \App\Models\InterventionHistory::create([
             'intervention_id' => $intervention->id,
             'user_id' => auth()->id(),
             'action' => 'Modification intervention',
             'details' => $details,
         ]);
-
     }
-
 
     return redirect()
         ->route('manager.interventions.show', $intervention)

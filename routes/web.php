@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\CommentController;
 
 use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -20,11 +21,32 @@ use App\Http\Controllers\Client\InterventionController as ClientInterventionCont
 use App\Http\Controllers\Manager\InterventionController as ManagerInterventionController;
 
 Route::get('/', function () {
+    $user = request()->user();
+
+    if ($user) {
+        $user->loadMissing('role');
+    }
+
+    $dashboardUrl = match ($user?->role?->nom) {
+        'Administrateur' =>
+            route('admin.dashboard'),
+
+        'Responsable technique' =>
+            route('manager.dashboard'),
+
+        'Technicien' =>
+            route('technician.dashboard'),
+
+        'Client' =>
+            route('client.dashboard'),
+
+        default => null,
+    };
+
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
+        'dashboardUrl' => $dashboardUrl,
     ]);
 });
 
@@ -68,6 +90,25 @@ Route::middleware(['auth', 'role:Responsable technique'])
             'update'
         ]);
 
+        Route::patch(
+            '/notifications/{notification}/read',
+            function (
+                \Illuminate\Http\Request $request,
+                string $notification
+            ) {
+                $notification = $request->user()
+                    ->notifications()
+                    ->findOrFail($notification);
+
+                $notification->markAsRead();
+
+                return redirect(
+                    $notification->data['url']
+                    ?? route('manager.dashboard')
+                );
+            }
+        )->name('notifications.read');
+
     });
 
 
@@ -90,6 +131,24 @@ Route::middleware(['auth', 'role:Technicien'])
             'show',
             'update'
         ]);
+        Route::patch(
+            '/notifications/{notification}/read',
+            function (
+                \Illuminate\Http\Request $request,
+                string $notification
+            ) {
+                $notification = $request->user()
+                    ->notifications()
+                    ->findOrFail($notification);
+
+                $notification->markAsRead();
+
+                return redirect(
+                    $notification->data['url']
+                        ?? route('technician.dashboard')
+                );
+            }
+        )->name('notifications.read');
 
     });
 
@@ -110,6 +169,24 @@ Route::middleware(['auth', 'role:Client'])
         'store',
         'show'
     ]);
+        Route::patch(
+            '/notifications/{notification}/read',
+            function (
+                \Illuminate\Http\Request $request,
+                string $notification
+            ) {
+                $notification = $request->user()
+                    ->notifications()
+                    ->findOrFail($notification);
+
+                $notification->markAsRead();
+
+                    return redirect(
+                        $notification->data['url']
+                        ?? route('client.dashboard')
+                    );
+            }
+        )->name('notifications.read');
 
     });
 
@@ -128,8 +205,17 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/users/{user}/profile',[UserProfileController::class, 'show']
             )->name('users.profile.show');
+    
+    Route::post(
+        '/interventions/{intervention}/comments',
+        [CommentController::class, 'store']
+    )->name('comments.store');
 
-});
+    Route::delete(
+        '/comments/{comment}',
+        [CommentController::class, 'destroy']
+        )->name('comments.destroy');
+}   );
 
 //ATTACHEMENT
 Route::middleware('auth')->group(function () {

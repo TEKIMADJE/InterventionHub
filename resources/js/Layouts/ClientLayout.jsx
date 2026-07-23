@@ -1,3 +1,4 @@
+import NotificationDropdown from '@/Components/NotificationDropdown';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function ClientLayout({ children }) {
@@ -115,10 +116,17 @@ export default function ClientLayout({ children }) {
                     </Link>
                 </div>
             </aside>
+            <div className="min-w-0 flex-1">
+                <header className="flex items-center justify-end border-b bg-white px-6 py-4 shadow-sm">
+                    <NotificationDropdown
+                        readRouteName="client.notifications.read"
+                    />
+                </header>
 
-            <main className="min-w-0 flex-1 p-6">
-                {children}
-            </main>
+                <main className="p-6">
+                    {children}
+                </main>
+            </div>
         </div>
     );
 }

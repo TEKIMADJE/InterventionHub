@@ -1,3 +1,4 @@
+import NotificationDropdown from '@/Components/NotificationDropdown';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function TechnicianLayout({ children }) {
@@ -18,9 +19,7 @@ export default function TechnicianLayout({ children }) {
 
                 <nav className="flex-1 space-y-2 p-4">
                     <Link
-                        href={route(
-                            'technician.dashboard'
-                        )}
+                        href={route('technician.dashboard')}
                         className="block rounded-lg px-4 py-3 hover:bg-gray-100"
                     >
                         📊 Dashboard
@@ -77,9 +76,17 @@ export default function TechnicianLayout({ children }) {
                 </div>
             </aside>
 
-            <main className="min-w-0 flex-1 p-6">
+            <div className="min-w-0 flex-1">
+                <header className="flex items-center justify-end border-b bg-white px-6 py-4 shadow-sm">
+                    <NotificationDropdown
+                        readRouteName="technician.notifications.read"
+                    />
+                </header>
+
+            <main className="p-6">
                 {children}
             </main>
+        </div>
         </div>
     );
 }

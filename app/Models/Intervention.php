@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\InterventionAttachment;
 
-
 class Intervention extends Model
 {
     protected $fillable = [
@@ -82,7 +81,8 @@ class Intervention extends Model
      */
     public function comments(): HasMany
     {
-        return $this->hasMany(Comment::class);
+        return $this->hasMany(Comment::class)
+            ->latest();
     }
 
     /**

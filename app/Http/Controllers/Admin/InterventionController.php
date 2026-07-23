@@ -204,6 +204,7 @@ public function create()
         'status',
         'manager',
         'attachments.user',
+        'comments.user.role',
     ]);
 
 
@@ -227,6 +228,7 @@ public function create()
         'priority',
         'status',
         'attachments.user',
+        'comments.user.role',
     ]);
 
 

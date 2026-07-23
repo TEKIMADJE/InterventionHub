@@ -1,3 +1,4 @@
+import CommentSection from '@/Components/CommentSection';
 import InterventionAttachments from '@/Components/InterventionAttachments';
 import ClientLayout from '@/Layouts/ClientLayout';
 import { Head, Link } from '@inertiajs/react';
@@ -228,6 +229,10 @@ export default function Show({ intervention = null }) {
                 </div>
                 <InterventionAttachments
                     intervention={intervention}
+                />
+                <CommentSection
+                    interventionId={intervention.id}
+                    comments={intervention.comments ?? []}
                 />
             </div>
         </>

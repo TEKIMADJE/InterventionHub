@@ -9,6 +9,9 @@ use App\Models\Category;
 use App\Models\Priority;
 use Illuminate\Http\Request;
 use App\Models\Status;
+use App\Models\User;
+use App\Notifications\InterventionNotification;
+use Illuminate\Support\Facades\Notification;
 
 
 class InterventionController extends Controller
@@ -110,23 +113,61 @@ public function store(Request $request)
         'priority_id' => 'required|exists:priorities,id',
     ]);
 
-    Intervention::create([
+    $statusEnAttente = Status::where(
+        'nom',
+        'En attente'
+    )->firstOrFail();
+
+    $intervention = Intervention::create([
         ...$validated,
 
-        'reference' => 'INT-' . now()->format('YmdHis'),
+        'reference' =>
+            'INT-' . now()->format('YmdHis'),
 
         'client_id' => auth()->id(),
 
-        // En attente
-        'status_id' => Status::where(
-            'nom',
-            'En attente'
-        )->firstOrFail()->id,
+        'status_id' => $statusEnAttente->id,
     ]);
+
+    /*
+     * Rechercher les responsables techniques actifs.
+     */
+    $managers = User::whereHas(
+        'role',
+        function ($query) {
+            $query->where(
+                'nom',
+                'Responsable technique'
+            );
+        }
+    )
+        ->where('is_active', true)
+        ->get();
+
+    /*
+     * Notifier tous les responsables techniques.
+     */
+    if ($managers->isNotEmpty()) {
+        Notification::send(
+            $managers,
+            new InterventionNotification(
+                $intervention,
+                'Nouvelle demande d’intervention',
+                "Une nouvelle intervention {$intervention->reference} a été créée par "
+                    . auth()->user()->name
+                    . '.',
+                "/manager/interventions/{$intervention->id}",
+                'new_request'
+            )
+        );
+    }
 
     return redirect()
         ->route('client.interventions.index')
-        ->with('success', 'Demande créée avec succès.');
+        ->with(
+            'success',
+            'Demande créée avec succès.'
+        );
 }
 public function show(Intervention $intervention)
 {
@@ -142,6 +183,7 @@ public function show(Intervention $intervention)
         'status',
         'technician',
         'attachments.user',
+        'comments.user.role',
     ]);
 
     return Inertia::render(

@@ -1,7 +1,7 @@
 import TechnicianLayout from '@/Layouts/TechnicianLayout';
-import { Head, useForm } from '@inertiajs/react';
 import InterventionAttachments from '@/Components/InterventionAttachments';
 import { Head, Link, useForm } from '@inertiajs/react';
+import CommentSection from '@/Components/CommentSection';
 
 export default function Show({ intervention, statuses }) {
 
@@ -194,6 +194,10 @@ export default function Show({ intervention, statuses }) {
         <InterventionAttachments
             intervention={intervention}
         />
+        <CommentSection
+            interventionId={intervention.id}
+             comments={intervention.comments ?? []}
+            />
             </div>
         </>
         
