@@ -1,6 +1,6 @@
+import InterventionAttachments from '@/Components/InterventionAttachments';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
-
 
 function Show({ intervention }) {
 
@@ -217,8 +217,9 @@ function Show({ intervention }) {
 
 
                 </div>
-
-
+                <InterventionAttachments
+                    intervention={intervention}
+                />
             </div>
 
         </>

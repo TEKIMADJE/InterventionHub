@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\InterventionAttachment;
 
 class User extends Authenticatable
 {
@@ -28,6 +29,8 @@ class User extends Authenticatable
         'telephone',
         'adresse',
         'photo',
+        'specialite',
+        'bio',
         'is_active',
     ];
 
@@ -93,9 +96,10 @@ class User extends Authenticatable
 /**
  * Pièces jointes ajoutées par l'utilisateur.
  */
-    public function attachments(): HasMany
+
+    public function interventionAttachments(): HasMany
     {
-        return $this->hasMany(Attachment::class);
+        return $this->hasMany(InterventionAttachment::class);
     }
 
 /**

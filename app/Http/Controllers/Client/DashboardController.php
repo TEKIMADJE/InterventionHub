@@ -10,29 +10,49 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $clientId = auth()->id();
+
+        $interventions = Intervention::where(
+            'client_id',
+            $clientId
+        );
 
         $stats = [
-            'total' => Intervention::where('client_id', $user->id)->count(),
+            'total' => (clone $interventions)->count(),
 
-            'pending' => Intervention::where('client_id', $user->id)
-                ->whereHas('status', fn($q) => $q->where('nom', 'En attente'))
+            'pending' => (clone $interventions)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'En attente');
+                })
                 ->count(),
 
-            'in_progress' => Intervention::where('client_id', $user->id)
-                ->whereHas('status', fn($q) => $q->where('nom', 'En cours'))
+            'in_progress' => (clone $interventions)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'En cours');
+                })
                 ->count(),
 
-            'completed' => Intervention::where('client_id', $user->id)
-                ->whereHas('status', fn($q) => $q->where('nom', 'Terminée'))
+            'completed' => (clone $interventions)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'Terminée');
+                })
                 ->count(),
         ];
 
-        return Inertia::render(
-            'Client/Dashboard',
-            [
-                'stats' => $stats
-            ]
-        );
+        $recentInterventions = Intervention::with([
+            'status',
+            'priority',
+            'category',
+            'technician',
+        ])
+            ->where('client_id', $clientId)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return Inertia::render('Client/Dashboard', [
+            'stats' => $stats,
+            'recentInterventions' => $recentInterventions,
+        ]);
     }
 }

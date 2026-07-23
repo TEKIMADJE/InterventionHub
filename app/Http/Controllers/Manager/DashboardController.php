@@ -10,42 +10,47 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $interventionsQuery = Intervention::query();
+
         $stats = [
+            'total' => (clone $interventionsQuery)->count(),
 
-            'total' => Intervention::count(),
+            'en_attente' => (clone $interventionsQuery)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'En attente');
+                })
+                ->count(),
 
-            'en_attente' => Intervention::whereHas('status', function ($q) {
-                $q->where('nom', 'En attente');
-            })->count(),
+            'en_cours' => (clone $interventionsQuery)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'En cours');
+                })
+                ->count(),
 
-            'en_cours' => Intervention::whereHas('status', function ($q) {
-                $q->where('nom', 'En cours');
-            })->count(),
+            'terminees' => (clone $interventionsQuery)
+                ->whereHas('status', function ($query) {
+                    $query->where('nom', 'Terminée');
+                })
+                ->count(),
 
-            'terminees' => Intervention::whereHas('status', function ($q) {
-                $q->where('nom', 'Terminée');
-            })->count(),
-
+            'non_attribuees' => (clone $interventionsQuery)
+                ->whereNull('technician_id')
+                ->count(),
         ];
-
 
         $interventions = Intervention::with([
             'client',
             'technician',
             'priority',
-            'status'
+            'status',
         ])
-        ->latest()
-        ->take(5)
-        ->get();
-
+            ->latest()
+            ->take(5)
+            ->get();
 
         return Inertia::render('Manager/Dashboard', [
-
             'stats' => $stats,
-
-            'interventions' => $interventions
-
+            'interventions' => $interventions,
         ]);
     }
 }

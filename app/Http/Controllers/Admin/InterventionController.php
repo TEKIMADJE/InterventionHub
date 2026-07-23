@@ -17,20 +17,108 @@ class InterventionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+public function index(Request $request)
 {
-    $interventions = Intervention::with([
+    $query = Intervention::with([
         'client',
         'technician',
         'category',
         'priority',
-        'status'
-    ])
-    ->latest()
-    ->get();
+        'status',
+    ]);
+
+    $query->when(
+        $request->filled('search'),
+        function ($query) use ($request) {
+            $search = $request->input('search');
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('reference', 'like', "%{$search}%")
+                    ->orWhere('titre', 'like', "%{$search}%")
+                    ->orWhereHas('client', function ($query) use ($search) {
+                        $query->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        );
+                    });
+            });
+        }
+    );
+
+    $query->when(
+        $request->filled('status_id'),
+        fn ($query) => $query->where(
+            'status_id',
+            $request->input('status_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('priority_id'),
+        fn ($query) => $query->where(
+            'priority_id',
+            $request->input('priority_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('category_id'),
+        fn ($query) => $query->where(
+            'category_id',
+            $request->input('category_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('technician_id'),
+        function ($query) use ($request) {
+            if ($request->input('technician_id') === 'unassigned') {
+                $query->whereNull('technician_id');
+            } else {
+                $query->where(
+                    'technician_id',
+                    $request->input('technician_id')
+                );
+            }
+        }
+    );
+
+    $interventions = $query
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    $technicians = User::whereHas('role', function ($query) {
+        $query->where('nom', 'Technicien');
+    })
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get(['id', 'name']);
 
     return Inertia::render('Admin/Interventions/Index', [
-        'interventions' => $interventions
+        'interventions' => $interventions,
+
+        'statuses' => Status::orderBy('id')
+            ->get(['id', 'nom']),
+
+        'priorities' => Priority::orderBy('id')
+            ->get(['id', 'nom']),
+
+        'categories' => Category::where('is_active', true)
+            ->orderBy('nom')
+            ->get(['id', 'nom']),
+
+        'technicians' => $technicians,
+
+        'filters' => $request->only([
+            'search',
+            'status_id',
+            'priority_id',
+            'category_id',
+            'technician_id',
+        ]),
     ]);
 }
 
@@ -114,7 +202,8 @@ public function create()
         'category',
         'priority',
         'status',
-        'manager'
+        'manager',
+        'attachments.user',
     ]);
 
 
@@ -136,7 +225,8 @@ public function create()
         'technician',
         'category',
         'priority',
-        'status'
+        'status',
+        'attachments.user',
     ]);
 
 

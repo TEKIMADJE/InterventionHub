@@ -13,25 +13,84 @@ use App\Models\Status;
 
 class InterventionController extends Controller
 {
-    public function index()
-    {
-        $interventions = Intervention::with([
-            'technician',
-            'priority',
-            'status',
-            'category',
-        ])
-        ->where('client_id', auth()->id())
-        ->latest()
-        ->get();
+    public function index(Request $request)
+{
+    $query = Intervention::with([
+        'technician',
+        'priority',
+        'status',
+        'category',
+    ])->where(
+        'client_id',
+        auth()->id()
+    );
 
-        return Inertia::render(
-            'Client/Interventions/Index',
-            [
-                'interventions' => $interventions
-            ]
-        );
-    }
+    $query->when(
+        $request->filled('search'),
+        function ($query) use ($request) {
+            $search = $request->input('search');
+
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('reference', 'like', "%{$search}%")
+                    ->orWhere('titre', 'like', "%{$search}%");
+            });
+        }
+    );
+
+    $query->when(
+        $request->filled('status_id'),
+        fn ($query) => $query->where(
+            'status_id',
+            $request->input('status_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('priority_id'),
+        fn ($query) => $query->where(
+            'priority_id',
+            $request->input('priority_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('category_id'),
+        fn ($query) => $query->where(
+            'category_id',
+            $request->input('category_id')
+        )
+    );
+
+    $interventions = $query
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    return Inertia::render(
+        'Client/Interventions/Index',
+        [
+            'interventions' => $interventions,
+
+            'statuses' => Status::orderBy('id')
+                ->get(['id', 'nom']),
+
+            'priorities' => Priority::orderBy('id')
+                ->get(['id', 'nom']),
+
+            'categories' => Category::where('is_active', true)
+                ->orderBy('nom')
+                ->get(['id', 'nom']),
+
+            'filters' => $request->only([
+                'search',
+                'status_id',
+                'priority_id',
+                'category_id',
+            ]),
+        ]
+    );
+}
     public function create()
 {
     return Inertia::render('Client/Interventions/Create', [
@@ -59,7 +118,10 @@ public function store(Request $request)
         'client_id' => auth()->id(),
 
         // En attente
-        'status_id' => 1,
+        'status_id' => Status::where(
+            'nom',
+            'En attente'
+        )->firstOrFail()->id,
     ]);
 
     return redirect()
@@ -69,22 +131,24 @@ public function store(Request $request)
 public function show(Intervention $intervention)
 {
     abort_if(
-        (int) $intervention->technician_id !== (int) auth()->id(),
+        (int) $intervention->client_id !== (int) auth()->id(),
         403,
-        'Cette intervention ne vous est pas attribuée.'
+        'Cette intervention ne vous appartient pas.'
     );
 
     $intervention->load([
-        'client',
         'category',
         'priority',
         'status',
-        'histories.user',
+        'technician',
+        'attachments.user',
     ]);
 
-    return Inertia::render('Technician/Interventions/Show', [
-        'intervention' => $intervention,
-        'statuses' => Status::all(),
-    ]);
+    return Inertia::render(
+        'Client/Interventions/Show',
+        [
+            'intervention' => $intervention,
+        ]
+    );
 }
 }

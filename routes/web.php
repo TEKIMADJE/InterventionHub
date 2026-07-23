@@ -6,9 +6,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use App\Http\Controllers\UserProfileController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InterventionController;
+use App\Http\Controllers\InterventionAttachmentController;
 
 use App\Http\Controllers\Manager\DashboardController as ManagerDashboardController;
 use App\Http\Controllers\Technician\DashboardController as TechnicianDashboardController;
@@ -123,7 +125,28 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
+    
+    Route::get('/users/{user}/profile',[UserProfileController::class, 'show']
+            )->name('users.profile.show');
 
+});
+
+//ATTACHEMENT
+Route::middleware('auth')->group(function () {
+    Route::post(
+        '/interventions/{intervention}/attachments',
+        [InterventionAttachmentController::class, 'store']
+    )->name('attachments.store');
+
+    Route::get(
+        '/attachments/{attachment}/download',
+        [InterventionAttachmentController::class, 'download']
+    )->name('attachments.download');
+
+    Route::delete(
+        '/attachments/{attachment}',
+        [InterventionAttachmentController::class, 'destroy']
+    )->name('attachments.destroy');
 });
 
 

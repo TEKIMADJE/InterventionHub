@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\InterventionAttachment;
+
 
 class Intervention extends Model
 {
@@ -88,7 +90,7 @@ class Intervention extends Model
      */
     public function attachments(): HasMany
     {
-        return $this->hasMany(Attachment::class);
+        return $this->hasMany(InterventionAttachment::class);
     }
 
     /**

@@ -1,23 +1,44 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AdminLayout from '@/Layouts/AdminLayout';
+import ClientLayout from '@/Layouts/ClientLayout';
+import ManagerLayout from '@/Layouts/ManagerLayout';
+import TechnicianLayout from '@/Layouts/TechnicianLayout';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 
-export default function Edit({ mustVerifyEmail, status }) {
-    return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
-            <Head title="Profile" />
+export default function Edit({
+    mustVerifyEmail,
+    status,
+    roleName,
+}) {
+    const layouts = {
+        Administrateur: AdminLayout,
+        'Responsable technique': ManagerLayout,
+        Technicien: TechnicianLayout,
+        Client: ClientLayout,
+    };
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+    const SelectedLayout = layouts[roleName];
+
+    const content = (
+        <>
+            <Head title="Mon profil" />
+
+            <div className="py-6">
+                <div className="mx-auto max-w-4xl space-y-6">
+                    <div>
+                        <h1 className="text-2xl font-bold sm:text-3xl">
+                            Mon profil
+                        </h1>
+
+                        <p className="mt-1 text-gray-500">
+                            Gérez vos informations personnelles et
+                            la sécurité de votre compte.
+                        </p>
+                    </div>
+
+                    <div className="rounded-xl bg-white p-4 shadow sm:p-8">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
@@ -25,15 +46,29 @@ export default function Edit({ mustVerifyEmail, status }) {
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="rounded-xl bg-white p-4 shadow sm:p-8">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="rounded-xl bg-white p-4 shadow sm:p-8">
                         <DeleteUserForm className="max-w-xl" />
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </>
+    );
+
+    if (!SelectedLayout) {
+        return (
+            <div className="min-h-screen bg-gray-100 p-6">
+                {content}
+            </div>
+        );
+    }
+
+    return (
+        <SelectedLayout>
+            {content}
+        </SelectedLayout>
     );
 }

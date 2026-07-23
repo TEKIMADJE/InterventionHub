@@ -1,6 +1,7 @@
 import TechnicianLayout from '@/Layouts/TechnicianLayout';
 import { Head, useForm } from '@inertiajs/react';
-
+import InterventionAttachments from '@/Components/InterventionAttachments';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Show({ intervention, statuses }) {
 
@@ -55,7 +56,21 @@ export default function Show({ intervention, statuses }) {
 
                     <p>
                         <strong>Client :</strong>
-                        {intervention.client?.name}
+                        {intervention.client ? (
+                            <Link
+                                href={route(
+                                    'users.profile.show',
+                                    intervention.client.id
+                                )}
+                                className="font-semibold text-blue-600 hover:underline"
+                            >
+                        {intervention.client.name}
+                            </Link>
+                                ) : (
+                                    <span className="font-semibold">
+                                        Non renseigné
+                                    </span>
+                                )}
                     </p>
 
 
@@ -176,16 +191,14 @@ export default function Show({ intervention, statuses }) {
             </p>
         </div>
     </div>
-</section>
-
-
+        <InterventionAttachments
+            intervention={intervention}
+        />
             </div>
-
         </>
+        
     );
 }
-
-
 
 Show.layout = page => (
     <TechnicianLayout>

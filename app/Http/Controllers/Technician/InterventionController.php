@@ -4,126 +4,216 @@ namespace App\Http\Controllers\Technician;
 
 use App\Http\Controllers\Controller;
 use App\Models\Intervention;
-use Inertia\Inertia;
-use Illuminate\Http\Request;
+use App\Models\InterventionHistory;
 use App\Models\Status;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class InterventionController extends Controller
 {
-    public function index()
-    {
-        $interventions = Intervention::with([
-            'client',
-            'priority',
-            'status',
-            'category'
-        ])
-        ->where('technician_id', auth()->id())
-        ->latest()
-        ->get();
-
-
-        return Inertia::render(
-            'Technician/Interventions/Index',
-            [
-                'interventions' => $interventions
-            ]
-        );
-    }
-    public function show(Intervention $intervention)
+    /**
+     * Afficher les interventions attribuées
+     * au technicien connecté.
+     */
+    public function index(Request $request)
 {
-    abort_if(
-        $intervention->technician_id !== auth()->id(),
-        403
-    );
-
-
-    $intervention->load([
+    $query = Intervention::with([
         'client',
-        'category',
         'priority',
         'status',
-        'histories.user'
-    ]);
+        'category',
+    ])->where(
+        'technician_id',
+        auth()->id()
+    );
 
+    $query->when(
+        $request->filled('search'),
+        function ($query) use ($request) {
+            $search = $request->input('search');
 
-    $statuses = Status::all();
+            $query->where(function ($query) use ($search) {
+                $query
+                    ->where('reference', 'like', "%{$search}%")
+                    ->orWhere('titre', 'like', "%{$search}%")
+                    ->orWhereHas('client', function ($query) use ($search) {
+                        $query->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        );
+                    });
+            });
+        }
+    );
 
+    $query->when(
+        $request->filled('status_id'),
+        fn ($query) => $query->where(
+            'status_id',
+            $request->input('status_id')
+        )
+    );
+
+    $query->when(
+        $request->filled('priority_id'),
+        fn ($query) => $query->where(
+            'priority_id',
+            $request->input('priority_id')
+        )
+    );
+
+    $interventions = $query
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
 
     return Inertia::render(
-        'Technician/Interventions/Show',
+        'Technician/Interventions/Index',
         [
-            'intervention' => $intervention,
-            'statuses' => $statuses
+            'interventions' => $interventions,
+
+            'statuses' => Status::orderBy('id')
+                ->get(['id', 'nom']),
+
+            'priorities' => \App\Models\Priority::orderBy('id')
+                ->get(['id', 'nom']),
+
+            'filters' => $request->only([
+                'search',
+                'status_id',
+                'priority_id',
+            ]),
         ]
     );
 }
-public function update(Request $request, Intervention $intervention)
-{
-    // Sécurité : vérifier que l'intervention appartient au technicien connecté
-    abort_if(
-        $intervention->technician_id !== auth()->id(),
-        403
-    );
 
+    /**
+     * Afficher une intervention.
+     */
+    public function show(Intervention $intervention)
+    {
+        abort_if(
+            (int) $intervention->technician_id !== (int) auth()->id(),
+            403,
+            'Cette intervention ne vous est pas attribuée.'
+        );
 
-    $validated = $request->validate([
-        'status_id' => 'required|exists:statuses,id',
-        'solution' => 'nullable|string',
-    ]);
+        $intervention->load([
+            'client',
+            'category',
+            'priority',
+            'status',
+            'histories.user',
+            'attachments.user',
+        ]);
 
+        $statuses = Status::orderBy('id')->get();
 
-    $ancienStatut = $intervention->status?->nom;
+        return Inertia::render(
+            'Technician/Interventions/Show',
+            [
+                'intervention' => $intervention,
+                'statuses' => $statuses,
+            ]
+        );
+    }
 
-    $currentStatus = $intervention->status->nom;
+    /**
+     * Mettre à jour le statut et le compte rendu.
+     */
+    public function update(
+        Request $request,
+        Intervention $intervention
+    ) {
+        abort_if(
+            (int) $intervention->technician_id !== (int) auth()->id(),
+            403,
+            'Cette intervention ne vous est pas attribuée.'
+        );
 
-$newStatus = Status::find($validated['status_id'])->nom;
+        $validated = $request->validate([
+            'status_id' => [
+                'required',
+                'integer',
+                'exists:statuses,id',
+            ],
+            'solution' => [
+                'nullable',
+                'string',
+                'max:5000',
+            ],
+        ]);
 
+        $intervention->loadMissing('status');
 
-if (
-    $currentStatus === 'Terminée'
-    && $newStatus !== 'Terminée'
-) {
-    return back()->withErrors([
-        'status_id' => 
-        'Une intervention terminée ne peut plus être modifiée.'
-    ]);
-}
+        $ancienStatut = $intervention->status?->nom ?? 'Non défini';
 
-    $intervention->update([
-        'status_id' => $validated['status_id'],
-        'solution' => $validated['solution'] ?? null,
+        $nouveauStatut = Status::findOrFail(
+            $validated['status_id']
+        );
 
-        'started_at' => 
-            $validated['status_id'] == 2 && !$intervention->started_at
-            ? now()
-            : $intervention->started_at,
+        $solution = $validated['solution'] ?? null;
 
-        'completed_at' =>
-            $validated['status_id'] == 3
-            ? now()
-            : $intervention->completed_at,
-    ]);
+        /*
+         * Une intervention terminée ne peut plus
+         * revenir vers un autre statut.
+         */
+        if (
+            $ancienStatut === 'Terminée' &&
+            $nouveauStatut->nom !== 'Terminée'
+        ) {
+            return back()->withErrors([
+                'status_id' =>
+                    'Une intervention terminée ne peut plus être modifiée.',
+            ]);
+        }
 
+        /*
+         * Une solution est obligatoire avant
+         * de terminer une intervention.
+         */
+        if (
+            $nouveauStatut->nom === 'Terminée' &&
+            blank($solution)
+        ) {
+            return back()->withErrors([
+                'solution' =>
+                    'Veuillez saisir un compte rendu avant de terminer l’intervention.',
+            ]);
+        }
 
-    $intervention->load('status');
+        $intervention->update([
+            'status_id' => $nouveauStatut->id,
+            'solution' => $solution,
 
+            'started_at' =>
+                $nouveauStatut->nom === 'En cours' &&
+                !$intervention->started_at
+                    ? now()
+                    : $intervention->started_at,
 
-    // Historique
-    \App\Models\InterventionHistory::create([
-        'intervention_id' => $intervention->id,
-        'user_id' => auth()->id(),
-        'action' => 'Mise à jour technicien',
-        'details' =>
-            "Statut : {$ancienStatut} → {$intervention->status->nom}"
-        . ($validated['solution']
-            ? " | Compte rendu : {$validated['solution']}"
-            : ""),
-    ]);
+            'completed_at' =>
+                $nouveauStatut->nom === 'Terminée' &&
+                !$intervention->completed_at
+                    ? now()
+                    : $intervention->completed_at,
+        ]);
 
+        InterventionHistory::create([
+            'intervention_id' => $intervention->id,
+            'user_id' => auth()->id(),
+            'action' => 'Mise à jour technicien',
+            'details' =>
+                "Statut : {$ancienStatut} → {$nouveauStatut->nom}"
+                . ($solution
+                    ? " | Compte rendu : {$solution}"
+                    : ''),
+        ]);
 
-    return redirect()
-        ->back()
-        ->with('success', 'Intervention mise à jour.');
-}
+        return back()->with(
+            'success',
+            'Intervention mise à jour avec succès.'
+        );
+    }
 }

@@ -1,63 +1,61 @@
-import TechnicianLayout from '@/Layouts/TechnicianLayout';
-import { Head, useForm } from '@inertiajs/react';
+import InterventionAttachments from '@/Components/InterventionAttachments';
+import ClientLayout from '@/Layouts/ClientLayout';
+import { Head, Link } from '@inertiajs/react';
 
-export default function Show({
-    intervention = null,
-    statuses = [],
-}) {
-    const { data, setData, put, processing, errors } = useForm({
-        status_id: intervention?.status_id ?? '',
-        solution: intervention?.solution ?? '',
-    });
-
-    function submit(e) {
-        e.preventDefault();
-
-        if (!intervention?.id) {
-            return;
-        }
-
-        put(
-            route(
-                'technician.interventions.update',
-                intervention.id
-            )
-        );
-    }
-
+export default function Show({ intervention = null }) {
     if (!intervention) {
         return (
-            <div className="p-6">
-                <h1 className="text-2xl font-bold text-red-600">
-                    Intervention introuvable
-                </h1>
+            <>
+                <Head title="Intervention introuvable" />
 
-                <p className="mt-2 text-gray-600">
-                    Les données de l’intervention n’ont pas été envoyées
-                    à la page.
-                </p>
-            </div>
+                <div className="p-6">
+                    <h1 className="text-2xl font-bold text-red-600">
+                        Intervention introuvable
+                    </h1>
+
+                    <p className="mt-2 text-gray-600">
+                        Les données de l’intervention n’ont pas été envoyées
+                        à cette page.
+                    </p>
+
+                    <Link
+                        href={route('client.interventions.index')}
+                        className="mt-4 inline-block text-blue-600 hover:underline"
+                    >
+                        ← Retour aux interventions
+                    </Link>
+                </div>
+            </>
         );
     }
 
     return (
         <>
-            <Head title="Détail intervention" />
+            <Head title={`Intervention ${intervention.reference}`} />
 
             <div className="p-4 sm:p-6">
-                <h1 className="text-2xl sm:text-3xl font-bold mb-6">
+                <div className="mb-6">
+                    <Link
+                        href={route('client.interventions.index')}
+                        className="text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                        ← Retour à mes interventions
+                    </Link>
+                </div>
+
+                <h1 className="mb-6 text-2xl font-bold sm:text-3xl">
                     Détail de l’intervention
                 </h1>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                     {/* Informations principales */}
-                    <div className="lg:col-span-2 space-y-6">
-                        <section className="bg-white shadow rounded-xl p-4 sm:p-6">
-                            <h2 className="text-xl font-bold mb-4">
+                    <div className="space-y-6 lg:col-span-2">
+                        <section className="rounded-xl bg-white p-4 shadow sm:p-6">
+                            <h2 className="mb-4 text-xl font-bold">
                                 Informations générales
                             </h2>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <p className="text-sm text-gray-500">
                                         Référence
@@ -80,18 +78,7 @@ export default function Show({
 
                                 <div>
                                     <p className="text-sm text-gray-500">
-                                        Client
-                                    </p>
-
-                                    <p className="font-semibold">
-                                        {intervention.client?.name ??
-                                            'Non renseigné'}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p className="text-sm text-gray-500">
-                                        Statut actuel
+                                        Statut
                                     </p>
 
                                     <p className="font-semibold">
@@ -121,121 +108,63 @@ export default function Show({
                                             'Non définie'}
                                     </p>
                                 </div>
+
+                                <div>
+                                    <p className="text-sm text-gray-500">
+                                        Technicien
+                                    </p>
+
+                                    <p className="font-semibold">
+                                        {intervention.technician ? (
+                                            <a
+                                                href={route(
+                                                    'users.profile.show',
+                                                    intervention.technician.id
+                                                )}
+                                                className="font-semibold text-blue-600 hover:underline"
+                                            >
+                                        {intervention.technician.name}
+                                            </a>
+                                                ) : (
+                                                    <span className="font-semibold">
+                                                        Non attribué
+                                                    </span>
+                                                )}
+                                    </p>
+                                </div>
                             </div>
                         </section>
 
-                        <section className="bg-white shadow rounded-xl p-4 sm:p-6">
-                            <h2 className="text-xl font-bold mb-4">
+                        {/* Description */}
+                        <section className="rounded-xl bg-white p-4 shadow sm:p-6">
+                            <h2 className="mb-4 text-xl font-bold">
                                 Description du problème
                             </h2>
 
-                            <p className="text-gray-700 whitespace-pre-line">
+                            <p className="whitespace-pre-line text-gray-700">
                                 {intervention.description ??
                                     'Aucune description'}
                             </p>
                         </section>
 
-                        <section className="bg-white shadow rounded-xl p-4 sm:p-6">
-                            <h2 className="text-xl font-bold mb-4">
-                                Compte rendu actuel
+                        {/* Solution du technicien */}
+                        <section className="rounded-xl bg-white p-4 shadow sm:p-6">
+                            <h2 className="mb-4 text-xl font-bold">
+                                Compte rendu du technicien
                             </h2>
 
-                            <p className="text-gray-700 whitespace-pre-line">
+                            <p className="whitespace-pre-line text-gray-700">
                                 {intervention.solution ??
                                     'Aucun compte rendu pour le moment'}
                             </p>
                         </section>
-
-                        {/* Formulaire de mise à jour */}
-                        <section className="bg-white shadow rounded-xl p-4 sm:p-6">
-                            <h2 className="text-xl font-bold mb-4">
-                                Mise à jour de l’intervention
-                            </h2>
-
-                            <form onSubmit={submit}>
-                                <div>
-                                    <label
-                                        htmlFor="status_id"
-                                        className="block mb-2 font-semibold"
-                                    >
-                                        Statut
-                                    </label>
-
-                                    <select
-                                        id="status_id"
-                                        value={data.status_id}
-                                        onChange={(e) =>
-                                            setData(
-                                                'status_id',
-                                                e.target.value
-                                            )
-                                        }
-                                        className="border rounded-lg p-2 w-full"
-                                    >
-                                        {statuses?.map((status) => (
-                                            <option
-                                                key={status.id}
-                                                value={status.id}
-                                            >
-                                                {status.nom}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {errors.status_id && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.status_id}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <div className="mt-4">
-                                    <label
-                                        htmlFor="solution"
-                                        className="block mb-2 font-semibold"
-                                    >
-                                        Compte rendu
-                                    </label>
-
-                                    <textarea
-                                        id="solution"
-                                        value={data.solution}
-                                        onChange={(e) =>
-                                            setData(
-                                                'solution',
-                                                e.target.value
-                                            )
-                                        }
-                                        className="border rounded-lg p-3 w-full"
-                                        rows="5"
-                                        placeholder="Décrivez le travail effectué..."
-                                    />
-
-                                    {errors.solution && (
-                                        <p className="mt-1 text-sm text-red-600">
-                                            {errors.solution}
-                                        </p>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="mt-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white px-5 py-2 rounded-lg"
-                                >
-                                    {processing
-                                        ? 'Enregistrement...'
-                                        : 'Enregistrer'}
-                                </button>
-                            </form>
-                        </section>
                     </div>
 
-                    {/* Colonne latérale */}
+                    {/* Informations complémentaires */}
                     <div className="space-y-6">
-                        <section className="bg-white rounded-xl shadow p-4 sm:p-6">
-                            <h2 className="text-xl font-bold mb-4">
-                                Contact du client
+                        <section className="rounded-xl bg-white p-4 shadow sm:p-6">
+                            <h2 className="mb-4 text-xl font-bold">
+                                Informations de contact
                             </h2>
 
                             <div className="space-y-4">
@@ -258,11 +187,9 @@ export default function Show({
                                     {intervention.contact_telephone ? (
                                         <a
                                             href={`tel:${intervention.contact_telephone}`}
-                                            className="font-semibold text-blue-600 hover:underline break-all"
+                                            className="break-all font-semibold text-blue-600 hover:underline"
                                         >
-                                            {
-                                                intervention.contact_telephone
-                                            }
+                                            {intervention.contact_telephone}
                                         </a>
                                     ) : (
                                         <p className="font-semibold">
@@ -281,17 +208,34 @@ export default function Show({
                                             'Non renseigné'}
                                     </p>
                                 </div>
+
+                                <div>
+                                    <p className="text-sm text-gray-500">
+                                        Date de création
+                                    </p>
+
+                                    <p className="font-semibold">
+                                        {intervention.created_at
+                                            ? new Date(
+                                                  intervention.created_at
+                                              ).toLocaleDateString('fr-FR')
+                                            : 'Non renseignée'}
+                                    </p>
+                                </div>
                             </div>
                         </section>
                     </div>
                 </div>
+                <InterventionAttachments
+                    intervention={intervention}
+                />
             </div>
         </>
     );
 }
 
 Show.layout = (page) => (
-    <TechnicianLayout>
+    <ClientLayout>
         {page}
-    </TechnicianLayout>
+    </ClientLayout>
 );
