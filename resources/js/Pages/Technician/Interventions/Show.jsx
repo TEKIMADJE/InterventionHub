@@ -1,7 +1,7 @@
-import TechnicianLayout from '@/Layouts/TechnicianLayout';
-import InterventionAttachments from '@/Components/InterventionAttachments';
-import { Head, Link, useForm } from '@inertiajs/react';
 import CommentSection from '@/Components/CommentSection';
+import InterventionAttachments from '@/Components/InterventionAttachments';
+import TechnicianLayout from '@/Layouts/TechnicianLayout';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Show({ intervention, statuses }) {
 
@@ -152,7 +152,7 @@ export default function Show({ intervention, statuses }) {
                     </form>
 
                 </div>
-                section className="bg-white rounded-xl shadow p-6">
+                <section className="bg-white rounded-xl shadow p-6">
     <h2 className="text-xl font-bold mb-4">
         Contact du client
     </h2>
@@ -191,6 +191,7 @@ export default function Show({ intervention, statuses }) {
             </p>
         </div>
     </div>
+    </section>
         <InterventionAttachments
             intervention={intervention}
         />

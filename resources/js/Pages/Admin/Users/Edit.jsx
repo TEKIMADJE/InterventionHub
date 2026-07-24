@@ -1,32 +1,44 @@
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Create({ roles = [] }) {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        email: '',
-        telephone: '',
-        role_id: '',
+export default function Edit({ user, roles = [] }) {
+    const {
+        data,
+        setData,
+        put,
+        processing,
+        errors,
+    } = useForm({
+        name: user.name ?? '',
+        email: user.email ?? '',
+        telephone: user.telephone ?? '',
+        role_id: user.role_id ?? '',
         password: '',
         password_confirmation: '',
-        is_active: true,
+        is_active: Boolean(user.is_active),
     });
 
     function submit(e) {
         e.preventDefault();
 
-        post(route('admin.users.store'));
+        put(route('admin.users.update', user.id));
     }
 
     return (
         <>
-            <Head title="Nouvel utilisateur" />
+            <Head title={`Modifier ${user.name}`} />
 
             <div className="mx-auto max-w-3xl p-4 sm:p-6">
                 <div className="mb-6 flex items-center justify-between">
-                    <h1 className="text-3xl font-bold">
-                        Nouvel utilisateur
-                    </h1>
+                    <div>
+                        <h1 className="text-3xl font-bold">
+                            Modifier l’utilisateur
+                        </h1>
+
+                        <p className="mt-1 text-gray-500">
+                            {user.name}
+                        </p>
+                    </div>
 
                     <Link
                         href={route('admin.users.index')}
@@ -93,6 +105,12 @@ export default function Create({ roles = [] }) {
                             }
                             className="w-full rounded-lg border-gray-300"
                         />
+
+                        {errors.telephone && (
+                            <p className="mt-1 text-sm text-red-600">
+                                {errors.telephone}
+                            </p>
+                        )}
                     </div>
 
                     <div>
@@ -107,7 +125,9 @@ export default function Create({ roles = [] }) {
                             }
                             className="w-full rounded-lg border-gray-300"
                         >
-                            <option value="">Choisir un rôle</option>
+                            <option value="">
+                                Choisir un rôle
+                            </option>
 
                             {roles.map((role) => (
                                 <option
@@ -128,7 +148,7 @@ export default function Create({ roles = [] }) {
 
                     <div>
                         <label className="mb-1 block font-semibold">
-                            Mot de passe
+                            Nouveau mot de passe
                         </label>
 
                         <input
@@ -140,6 +160,10 @@ export default function Create({ roles = [] }) {
                             className="w-full rounded-lg border-gray-300"
                         />
 
+                        <p className="mt-1 text-sm text-gray-500">
+                            Laisse vide pour conserver le mot de passe actuel.
+                        </p>
+
                         {errors.password && (
                             <p className="mt-1 text-sm text-red-600">
                                 {errors.password}
@@ -149,7 +173,7 @@ export default function Create({ roles = [] }) {
 
                     <div>
                         <label className="mb-1 block font-semibold">
-                            Confirmation du mot de passe
+                            Confirmation du nouveau mot de passe
                         </label>
 
                         <input
@@ -170,9 +194,13 @@ export default function Create({ roles = [] }) {
                             type="checkbox"
                             checked={data.is_active}
                             onChange={(e) =>
-                                setData('is_active', e.target.checked)
+                                setData(
+                                    'is_active',
+                                    e.target.checked
+                                )
                             }
                         />
+
                         Compte actif
                     </label>
 
@@ -182,8 +210,8 @@ export default function Create({ roles = [] }) {
                         className="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 disabled:opacity-50"
                     >
                         {processing
-                            ? 'Enregistrement...'
-                            : 'Créer l’utilisateur'}
+                            ? 'Modification...'
+                            : 'Enregistrer les modifications'}
                     </button>
                 </form>
             </div>
@@ -191,6 +219,6 @@ export default function Create({ roles = [] }) {
     );
 }
 
-Create.layout = (page) => (
+Edit.layout = (page) => (
     <AdminLayout>{page}</AdminLayout>
 );

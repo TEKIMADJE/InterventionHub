@@ -28,18 +28,10 @@ Route::get('/', function () {
     }
 
     $dashboardUrl = match ($user?->role?->nom) {
-        'Administrateur' =>
-            route('admin.dashboard'),
-
-        'Responsable technique' =>
-            route('manager.dashboard'),
-
-        'Technicien' =>
-            route('technician.dashboard'),
-
-        'Client' =>
-            route('client.dashboard'),
-
+        'Administrateur' => route('admin.dashboard'),
+        'Responsable technique' => route('manager.dashboard'),
+        'Technicien' => route('technician.dashboard'),
+        'Client' => route('client.dashboard'),
         default => null,
     };
 
@@ -48,8 +40,26 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
         'dashboardUrl' => $dashboardUrl,
     ]);
-});
+})->name('home');
 
+
+Route::get('/dashboard', function () {
+    $user = request()->user();
+
+    $routeName = match ($user->role?->nom) {
+        'Administrateur' => 'admin.dashboard',
+        'Responsable technique' => 'manager.dashboard',
+        'Technicien' => 'technician.dashboard',
+        'Client' => 'client.dashboard',
+        default => null,
+    };
+
+    if (!$routeName) {
+        abort(403, 'Aucun rôle valide attribué à cet utilisateur.');
+    }
+
+    return redirect()->route($routeName);
+})->middleware('auth')->name('dashboard');
 
 // ADMIN
 Route::middleware(['auth', 'role:Administrateur'])

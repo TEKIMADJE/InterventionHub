@@ -45,53 +45,32 @@ function Show({ intervention }) {
                     </div>
 
 
-                    <Link
-                        href={`/admin/interventions/${intervention.id}/edit`}
-                        className="
-                        bg-amber-500
-                        hover:bg-amber-600
-                        text-white
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        shadow-sm
-                        transition
-                        duration-200"
-                        >
-                        Modifier
-                    </Link>
-                    <button
-                        onClick={deleteIntervention}
-                        className="
-                        bg-red-600
-                        hover:bg-red-700
-                        text-white
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        shadow-sm
-                        transition
-                        duration-200
-                        "
-                        >
-                        Supprimer
-                    </button>
-                    <Link
-                        href="/admin/interventions"
-                        className="
-                        bg-gray-700
-                        hover:bg-gray-800
-                        text-white
-                        px-5
-                        py-2.5
-                        rounded-xl
-                        shadow-sm
-                        transition
-                        duration-200
-                        "
-                    >
-                        Retour
-                    </Link>
+                    <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4">
+    <Link
+        href={route('admin.interventions.index')}
+        className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+    >
+        ← Retour
+    </Link>
+
+    <Link
+        href={route(
+            'admin.interventions.edit',
+            intervention.id
+        )}
+        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+    >
+        Modifier
+    </Link>
+
+    <button
+        type="button"
+        onClick={deleteIntervention}
+        className="inline-flex items-center justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
+    >
+        Supprimer
+    </button>
+</div>
 
 
                 </div>

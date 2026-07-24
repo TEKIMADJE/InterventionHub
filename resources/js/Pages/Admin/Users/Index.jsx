@@ -21,7 +21,7 @@ export default function Index({ users }) {
                     </div>
 
                     <Link
-                        href="/admin/users/create"
+                         href={route('admin.users.create')}
                         className="rounded-lg bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
                     >
                         + Nouvel utilisateur
@@ -126,7 +126,7 @@ export default function Index({ users }) {
                                                     </Link>
 
                                                     <Link
-                                                        href={`/admin/users/${user.id}/edit`}
+                                                        href={route('admin.users.edit', user.id)}
                                                         className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
                                                     >
                                                         Modifier

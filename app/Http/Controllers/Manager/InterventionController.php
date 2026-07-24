@@ -187,6 +187,7 @@ public function update(Request $request, Intervention $intervention)
 
     // Recharger les nouvelles relations après la modification
     $intervention->load([
+        'client',
         'technician',
         'status',
         'priority',
@@ -195,20 +196,44 @@ public function update(Request $request, Intervention $intervention)
     ]);
 
     // Notification uniquement si le technicien a changé
-    if (
-        (int) $oldTechnicianId !== (int) $intervention->technician_id
-        && $intervention->technician
-    ) {
-        $intervention->technician->notify(
+    $technicianChanged =
+    (int) $oldTechnicianId !==
+    (int) $intervention->technician_id;
+
+// Notification lorsqu’un technicien est affecté ou remplacé
+if ($technicianChanged && $intervention->technician) {
+    // Notification au nouveau technicien
+    $intervention->technician->notify(
+        new InterventionNotification(
+            $intervention,
+            'Nouvelle intervention attribuée',
+            "L’intervention {$intervention->reference} vous a été attribuée.",
+            route(
+                'technician.interventions.show',
+                $intervention
+            ),
+            'assignment'
+        )
+    );
+
+    // Notification au client concerné
+    if ($intervention->client) {
+        $technicianName = $intervention->technician->name;
+
+        $intervention->client->notify(
             new InterventionNotification(
                 $intervention,
-                'Nouvelle intervention attribuée',
-                "L’intervention {$intervention->reference} vous a été attribuée.",
-                "/technician/interventions/{$intervention->id}",
+                'Technicien affecté',
+                "Le technicien {$technicianName} a été affecté à votre intervention {$intervention->reference}.",
+                route(
+                    'client.interventions.show',
+                    $intervention
+                ),
                 'assignment'
             )
         );
     }
+}
 
     $newTechnician = $intervention->technician?->name ?? 'Non affecté';
     $newStatus = $intervention->status?->nom ?? 'Aucun';

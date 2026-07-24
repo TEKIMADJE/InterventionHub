@@ -6,6 +6,8 @@ use App\Models\Comment;
 use App\Models\Intervention;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Notifications\NewCommentNotification;
+use Illuminate\Support\Facades\Notification;
 
 class CommentController extends Controller
 {
@@ -27,10 +29,48 @@ class CommentController extends Controller
             ],
         ]);
 
-        $intervention->comments()->create([
+        $comment = $intervention->comments()->create([
             'user_id' => $request->user()->id,
             'contenu' => $validated['contenu'],
         ]);
+
+        $comment->load([
+            'user.role',
+            'intervention.client.role',
+            'intervention.technician.role',
+        ]);
+
+        $authorId = (int) $request->user()->id;
+
+        $administratorsAndManagers = User::whereHas(
+            'role',
+                function ($query) {
+                    $query->whereIn('nom', [
+                        'Administrateur',
+                        'Responsable technique',
+                    ]);
+                }
+            )
+                ->where('is_active', true)
+                ->get();
+
+$recipients = collect([
+    $intervention->client,
+    $intervention->technician,
+])
+    ->merge($administratorsAndManagers)
+    ->filter()
+    ->reject(
+        fn (User $user) =>
+            (int) $user->id === $authorId
+    )
+    ->unique('id')
+    ->values();
+
+Notification::send(
+    $recipients,
+    new NewCommentNotification($comment)
+);
 
         return back()->with(
             'success',

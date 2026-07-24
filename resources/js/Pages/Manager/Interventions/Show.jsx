@@ -21,18 +21,20 @@ export default function Show({
                     Détails de l'intervention
                     </h1>
 
+                    <div className="mt-6 flex flex-wrap items-center gap-2 border-t pt-4">
                     <Link
                         href={route("manager.interventions.edit", intervention.id)}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg"
+                        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
                     >
                         Modifier
                     </Link>
                     <Link
                         href={route("manager.interventions.index")}
-                        className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
                     >
                         Retour
                     </Link>
+                    </div>
                 </div>
 
 
@@ -130,7 +132,6 @@ export default function Show({
                     comments={intervention.comments ?? []}
                 />
             </div>
-
         </>
     );
 }

@@ -82,7 +82,7 @@ export default function Index({
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h1 className="text-2xl font-bold sm:text-3xl">
-                            Mes interventions
+                            Mes demandes d'intervention
                         </h1>
 
                         <p className="text-gray-500">

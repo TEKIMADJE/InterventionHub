@@ -11,6 +11,8 @@ use App\Models\Category;
 use App\Models\Priority;
 use App\Models\Status;
 use Illuminate\Support\Str;
+use App\Notifications\InterventionCreatedNotification;
+use Illuminate\Support\Facades\Notification;
 
 class InterventionController extends Controller
 {
@@ -167,7 +169,7 @@ public function create()
     ]);
 
 
-    Intervention::create([
+    $intervention = Intervention::create([
 
         'reference' => 'INT-' . strtoupper(Str::random(8)),
 
@@ -184,6 +186,25 @@ public function create()
         'status_id' => $validated['status_id'],
 
     ]);
+
+    // Notification au client concerné
+    $client = User::findOrFail($validated['client_id']);
+
+    $client->notify(
+        new InterventionCreatedNotification($intervention)
+    );
+
+    // Notification aux responsables techniques actifs
+    $managers = User::whereHas('role', function ($query) {
+        $query->where('nom', 'Responsable technique');
+    })
+        ->where('is_active', true)
+        ->get();
+
+    Notification::send(
+        $managers,
+        new InterventionCreatedNotification($intervention)
+    );
 
 
     return redirect()
