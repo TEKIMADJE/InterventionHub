@@ -1,6 +1,6 @@
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Index({
     interventions,
@@ -19,6 +19,41 @@ export default function Index({
     });
 
     const interventionList = interventions?.data ?? [];
+
+    useEffect(() => {
+    /*
+     * Ne pas relancer une requête si la valeur
+     * correspond déjà au filtre du serveur.
+     */
+    if (
+        form.search ===
+        (filters.search ?? '')
+    ) {
+        return;
+    }
+
+    const timeout = setTimeout(() => {
+        router.get(
+            route('admin.interventions.index'),
+            {
+                ...form,
+                search:
+                    form.search || undefined,
+            },
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                only: [
+                    'interventions',
+                    'filters',
+                ],
+            }
+        );
+    }, 400);
+
+    return () => clearTimeout(timeout);
+}, [form.search]);
 
     function handleChange(e) {
         setForm({
@@ -346,9 +381,11 @@ export default function Index({
                                                             'admin.interventions.show',
                                                             intervention.id
                                                         )}
-                                                        className="rounded-lg bg-green-600 px-3 py-2 text-white hover:bg-green-700"
+                                                        title="Consulter"
+                                                        aria-label={`Consulter l’intervention ${intervention.reference}`}
+                                                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white hover:bg-green-700"
                                                     >
-                                                        Voir
+                                                        <i className="fa-solid fa-eye"></i>
                                                     </Link>
                                                 </td>
                                             </tr>

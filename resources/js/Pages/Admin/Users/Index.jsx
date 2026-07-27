@@ -1,8 +1,43 @@
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router, } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
-export default function Index({ users }) {
+export default function Index({
+    users,
+    filters = {},
+}) {
+    const [search, setSearch] = useState(
+        filters.search ?? ''
+    );
+
     const userList = users?.data ?? [];
+
+    useEffect(() => {
+        /*
+         * Éviter une requête inutile lorsque
+         * la recherche correspond déjà au filtre.
+         */
+        if (search === (filters.search ?? '')) {
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            router.get(
+                route('admin.users.index'),
+                {
+                    search: search || undefined,
+                },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                    only: ['users', 'filters'],
+                }
+            );
+        }, 400);
+
+        return () => clearTimeout(timeout);
+    }, [search]);
 
     return (
         <>
@@ -27,11 +62,45 @@ export default function Index({ users }) {
                         + Nouvel utilisateur
                     </Link>
                 </div>
+                <div className="mb-6 rounded-xl bg-white p-4 shadow">
+                    <label
+                        htmlFor="user-search"
+                        className="mb-2 block text-sm font-semibold text-gray-700"
+                    >
+                        Rechercher un utilisateur
+                    </label>
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <input
+                            id="user-search"
+                            type="search"
+                            value={search}
+                            onChange={(event) =>
+                                setSearch(event.target.value)
+                        }
+                            placeholder="Saisir le nom de l’utilisateur..."
+                            autoComplete="off"
+                            className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                        />
+
+                        {search && (
+                            <button
+                                type="button"
+                                onClick={() => setSearch('')}
+                                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                            >
+                                Effacer
+                            </button>
+                        )}
+                    </div>
+                </div>
 
                 <div className="overflow-hidden rounded-xl bg-white shadow">
                     {userList.length === 0 ? (
                         <p className="p-8 text-center text-gray-500">
-                            Aucun utilisateur disponible.
+                            {search
+                                ? `Aucun utilisateur trouvé pour « ${search} ».`
+                                : 'Aucun utilisateur disponible.'}
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
@@ -122,15 +191,18 @@ export default function Index({ users }) {
                                                         )}
                                                         className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
                                                     >
-                                                        Profil
+                                                        <i className="fa-mosaic fa-solid fa-circle-user"></i>
                                                     </Link>
 
                                                     <Link
-                                                        href={route('admin.users.edit', user.id)}
-                                                        className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700"
+                                                        href={route(
+                                                            'admin.users.edit',
+                                                            user.id
+                                                            )}
+                                                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700"
                                                     >
-                                                        Modifier
-                                                    </Link>
+                                                    <i className="fa-solid fa-pen-to-square"></i>
+                                                </Link>
                                                 </div>
                                             </td>
                                         </tr>

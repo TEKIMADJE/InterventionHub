@@ -282,33 +282,150 @@ public function create()
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Intervention $intervention)
-{
-
+    public function update(
+    Request $request,
+    Intervention $intervention
+) {
     $validated = $request->validate([
-
         'titre' => 'required|string|max:255',
-
         'description' => 'required|string',
-
         'client_id' => 'required|exists:users,id',
-
         'technician_id' => 'nullable|exists:users,id',
-
         'category_id' => 'required|exists:categories,id',
-
         'priority_id' => 'required|exists:priorities,id',
-
         'status_id' => 'required|exists:statuses,id',
-
     ]);
 
+    $oldTechnicianId = $intervention->technician_id;
+    $oldStatusId = $intervention->status_id;
+
+    $technicianChanged =
+        (int) $oldTechnicianId !==
+        (int) ($validated['technician_id'] ?? 0);
+
+    $statusChanged =
+        (int) $oldStatusId !==
+        (int) $validated['status_id'];
+
+    /*
+     * Enregistrer la personne ayant réalisé
+     * la dernière affectation.
+     */
+    if ($technicianChanged) {
+        $validated['assigned_by'] =
+            $validated['technician_id']
+                ? $request->user()->id
+                : null;
+    }
 
     $intervention->update($validated);
 
+    $intervention->load([
+        'client.role',
+        'technician.role',
+        'status',
+    ]);
+
+    /*
+     * Utilisateurs responsables actifs.
+     */
+    $managers = User::whereHas(
+        'role',
+        fn ($query) => $query->where(
+            'nom',
+            'Responsable technique'
+        )
+    )
+        ->where('is_active', true)
+        ->get();
+
+    /*
+     * Notification d’affectation.
+     */
+    if (
+        $technicianChanged &&
+        $intervention->technician
+    ) {
+        $recipients = collect([
+            $intervention->client,
+            $intervention->technician,
+        ])
+            ->merge($managers)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $this->sendInterventionNotification(
+            $recipients,
+            $intervention,
+            'Technicien affecté',
+            sprintf(
+                '%s a été affecté à l’intervention %s.',
+                $intervention->technician->name,
+                $intervention->reference
+            ),
+            'technician_assigned'
+        );
+    }
+
+    /*
+     * Notification de désaffectation.
+     */
+    if (
+        $technicianChanged &&
+        !$intervention->technician
+    ) {
+        $recipients = collect([
+            $intervention->client,
+        ])
+            ->merge($managers)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $this->sendInterventionNotification(
+            $recipients,
+            $intervention,
+            'Technicien retiré',
+            sprintf(
+                'Le technicien de l’intervention %s a été retiré.',
+                $intervention->reference
+            ),
+            'technician_unassigned'
+        );
+    }
+
+    /*
+     * Notification de changement de statut.
+     */
+    if ($statusChanged) {
+        $recipients = collect([
+            $intervention->client,
+            $intervention->technician,
+        ])
+            ->merge($managers)
+            ->filter()
+            ->unique('id')
+            ->values();
+
+        $this->sendInterventionNotification(
+            $recipients,
+            $intervention,
+            'Statut modifié',
+            sprintf(
+                'L’intervention %s est maintenant « %s ».',
+                $intervention->reference,
+                $intervention->status->nom
+            ),
+            'status_changed'
+        );
+    }
 
     return redirect()
-        ->route('admin.interventions.show', $intervention)
+        ->route(
+            'admin.interventions.show',
+            $intervention
+        )
         ->with(
             'success',
             'Intervention modifiée avec succès.'
@@ -329,5 +446,56 @@ public function create()
             'success',
             'Intervention supprimée avec succès.'
         );
+}
+private function sendInterventionNotification(
+    iterable $recipients,
+    Intervention $intervention,
+    string $title,
+    string $message,
+    string $type
+): void {
+    foreach ($recipients as $recipient) {
+        $recipient->notify(
+            new InterventionNotification(
+                $intervention,
+                $title,
+                $message,
+                $this->interventionUrlFor(
+                    $recipient,
+                    $intervention
+                ),
+                $type
+            )
+        );
+    }
+}
+
+private function interventionUrlFor(
+    User $user,
+    Intervention $intervention
+): string {
+    $user->loadMissing('role');
+
+    $routeName = match ($user->role?->nom) {
+        'Administrateur' =>
+            'admin.interventions.show',
+
+        'Responsable technique' =>
+            'manager.interventions.show',
+
+        'Technicien' =>
+            'technician.interventions.show',
+
+        'Client' =>
+            'client.interventions.show',
+
+        default => 'dashboard',
+    };
+
+    if ($routeName === 'dashboard') {
+        return route('dashboard');
+    }
+
+    return route($routeName, $intervention);
 }
 }

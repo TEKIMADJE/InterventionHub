@@ -12,16 +12,35 @@ use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index()
-    {
-        $users = User::with('role')
-            ->latest()
-            ->paginate(10);
+    public function index(Request $request)
+{
+    $search = trim(
+        (string) $request->input('search', '')
+    );
 
-        return Inertia::render('Admin/Users/Index', [
-            'users' => $users,
-        ]);
-    }
+    $users = User::with('role')
+        ->when(
+            $search !== '',
+            function ($query) use ($search) {
+                $query->where(
+                    'name',
+                    'like',
+                    "%{$search}%"
+                );
+            }
+        )
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
+
+    return Inertia::render('Admin/Users/Index', [
+        'users' => $users,
+
+        'filters' => [
+            'search' => $search,
+        ],
+    ]);
+}
 
     public function create()
     {
@@ -46,11 +65,17 @@ class UserController extends Controller
             'is_active' => 'required|boolean',
         ]);
 
+        $user = User::create($validated);
+
+        $user->sendEmailVerificationNotification();
+
         $validated['password'] = Hash::make(
             $validated['password']
         );
 
-        User::create($validated);
+        $user = User::create($validated);
+
+        $user->sendEmailVerificationNotification();
 
         return redirect()
             ->route('admin.users.index')
@@ -104,11 +129,23 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
+        $emailChanged =
+            $user->email !== $validated['email'];
+
         $user->update($validated);
 
+            if ($emailChanged) {
+                $user->forceFill([
+                    'email_verified_at' => null,
+                ])->save();
+
+            $user->sendEmailVerificationNotification();
+            }
+        
         return redirect()
             ->route('admin.users.index')
             ->with('success', 'Utilisateur modifié avec succès.');
+
     }
 
     public function destroy(User $user)

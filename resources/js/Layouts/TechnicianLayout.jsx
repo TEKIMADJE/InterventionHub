@@ -73,7 +73,7 @@ export default function TechnicianLayout({ children }) {
                             )
                         )}
                     >
-                        🛠️ Mes interventions
+                        🛠️ Interventions
                     </Link>
                 </nav>
 

@@ -95,7 +95,7 @@ export default function AdminLayout({ children }) {
                         {/* La cloche de notificationsa. */}
 
                         <NotificationDropdown
-                            readRouteName="manager.notifications.read"
+                            readRouteName="admin.notifications.read"
                         />
 
                         {/* Menu utilisateur */}

@@ -76,7 +76,29 @@ Route::middleware(['auth', 'role:Administrateur'])
 
         Route::resource('interventions', InterventionController::class);
 
-    });
+        Route::middleware(['auth','verified','role:Administrateur',]);
+
+        Route::patch(
+            '/notifications/{notification}/read',
+            function (
+                \Illuminate\Http\Request $request,
+                string $notification
+            ) {
+            $notification = $request->user()
+                ->notifications()
+                ->findOrFail($notification);
+
+            $url = $notification->data['url']
+                ?? route('admin.dashboard');
+
+            $notification->markAsRead();
+
+                return redirect($url);
+            }
+        )->name('notifications.read');
+
+        });
+
 
 
 // MANAGER
@@ -88,6 +110,11 @@ Route::middleware(['auth', 'role:Responsable technique'])
         Route::get('/dashboard', [ManagerDashboardController::class, 'index'])
             ->name('dashboard');
 
+        Route::middleware([
+            'auth',
+            'verified',
+            'role:Responsable technique',
+        ]);
 
         Route::resource(
                 'interventions',
@@ -131,6 +158,12 @@ Route::middleware(['auth', 'role:Technicien'])
         Route::get('/dashboard', [TechnicianDashboardController::class, 'index'])
             ->name('dashboard');
 
+        Route::middleware([
+            'auth',
+            'verified',
+            'role:Technicien',
+        ]);
+
 
         Route::resource(
             'interventions',
@@ -171,6 +204,12 @@ Route::middleware(['auth', 'role:Client'])
 
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])
             ->name('dashboard');
+
+        Route::middleware([
+            'auth',
+            'verified',
+            'role:Client',
+        ]);
 
         Route::resource('interventions', ClientInterventionController::class)
     ->only([

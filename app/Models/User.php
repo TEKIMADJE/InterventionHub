@@ -11,8 +11,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\InterventionAttachment;
 use App\Models\Role;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\VerifyEmailNotification;
+use App\Notifications\ResetPasswordNotification;
 
-class User extends Authenticatable
+
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -109,5 +113,20 @@ class User extends Authenticatable
     public function interventionHistories(): HasMany
     {
         return $this->hasMany(InterventionHistory::class);
+    }
+
+    public function sendEmailVerificationNotification(): void
+{
+    $this->notify(
+        new VerifyEmailNotification()
+    );
+}
+
+    public function sendPasswordResetNotification(
+        $token
+    ): void {
+        $this->notify(
+            new ResetPasswordNotification($token)
+        );
     }
 }

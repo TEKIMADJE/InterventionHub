@@ -91,18 +91,21 @@ export default function Dashboard({
 
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <Link
-                            href="/admin/users"
-                            className="rounded-lg border border-blue-600 px-4 py-2 text-center text-blue-600 hover:bg-blue-50"
-                        >
-                            Gérer les utilisateurs
-                        </Link>
+    href={route('admin.users.index')}
+    className="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-4 py-2 text-blue-600 hover:bg-blue-50"
+>
+    <i className="fa-solid fa-users"></i>
+    <span>Gestion Utilisateurs</span>
+</Link>
 
                         <Link
-                            href="/admin/interventions"
-                            className="rounded-lg bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
-                        >
-                            Gérer les interventions
-                        </Link>
+    href={route('admin.interventions.index')}
+    className="inline-flex items-center gap-2 rounded-lg border border-green-600 px-4 py-2 text-green-600 hover:bg-green-50"
+>
+    <i className="fa-solid fa-screwdriver-wrench"></i>
+
+    <span>Gestion des interventions</span>
+</Link>
                     </div>
                 </div>
 

@@ -35,11 +35,18 @@ class InterventionCreatedNotification extends Notification
             'type' => 'intervention_created',
             'intervention_id' => $this->intervention->id,
             'reference' => $this->intervention->reference,
-            'message' => sprintf(
-                'Une nouvelle intervention %s a été créée.',
-                $this->intervention->reference
-            ),
-            'url' => route($routeName, $this->intervention),
-        ];
-    }
+
+        'title' => 'Nouvelle intervention',
+
+        'message' => sprintf(
+            'Une nouvelle intervention %s a été créée.',
+            $this->intervention->reference
+        ),
+
+        'url' => route(
+            $routeName,
+            $this->intervention
+        ),
+    ];
+}
 }

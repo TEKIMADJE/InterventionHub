@@ -54,18 +54,54 @@ class CommentController extends Controller
                 ->where('is_active', true)
                 ->get();
 
-$recipients = collect([
-    $intervention->client,
-    $intervention->technician,
-])
-    ->merge($administratorsAndManagers)
+$author = $request->user();
+$author->loadMissing('role');
+
+$authorRole = $author->role?->nom;
+
+$administratorsAndManagers = User::whereHas(
+    'role',
+    function ($query) {
+        $query->whereIn('nom', [
+            'Administrateur',
+            'Responsable technique',
+        ]);
+    }
+)
+    ->where('is_active', true)
+    ->get();
+
+$recipients = match ($authorRole) {
+    'Client' => collect([
+        $intervention->technician,
+    ])->merge($administratorsAndManagers),
+
+    'Technicien' => collect([
+        $intervention->client,
+    ])->merge($administratorsAndManagers),
+
+    'Responsable technique',
+    'Administrateur' => collect([
+        $intervention->client,
+        $intervention->technician,
+    ]),
+
+    default => collect(),
+};
+
+$recipients = $recipients
     ->filter()
     ->reject(
         fn (User $user) =>
-            (int) $user->id === $authorId
+            (int) $user->id === (int) $author->id
     )
     ->unique('id')
     ->values();
+
+Notification::send(
+    $recipients,
+    new NewCommentNotification($comment)
+);
 
 Notification::send(
     $recipients,
