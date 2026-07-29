@@ -1,5 +1,5 @@
 import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, Link, router, } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
 export default function Index({
@@ -13,10 +13,6 @@ export default function Index({
     const userList = users?.data ?? [];
 
     useEffect(() => {
-        /*
-         * Éviter une requête inutile lorsque
-         * la recherche correspond déjà au filtre.
-         */
         if (search === (filters.search ?? '')) {
             return;
         }
@@ -39,30 +35,57 @@ export default function Index({
         return () => clearTimeout(timeout);
     }, [search]);
 
+    function roleColor(role) {
+        switch (role) {
+            case 'Administrateur':
+                return 'bg-blue-100 text-blue-700';
+
+            case 'Responsable technique':
+                return 'bg-purple-100 text-purple-700';
+
+            case 'Technicien':
+                return 'bg-emerald-100 text-emerald-700';
+
+            case 'Client':
+                return 'bg-cyan-100 text-cyan-700';
+
+            default:
+                return 'bg-gray-100 text-gray-700';
+        }
+    }
+
     return (
         <>
             <Head title="Gestion des utilisateurs" />
 
-            <div className="p-4 sm:p-6">
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mx-auto w-full max-w-7xl space-y-6">
+                {/* En-tête */}
+                <section className="flex flex-col gap-4 rounded-2xl bg-gradient-to-r from-blue-700 to-indigo-700 p-5 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold sm:text-3xl">
+                        <p className="text-sm text-blue-100">
+                            Administration
+                        </p>
+
+                        <h1 className="mt-1 text-2xl font-bold">
                             Gestion des utilisateurs
                         </h1>
 
-                        <p className="mt-1 text-gray-500">
+                        <p className="mt-1 text-sm text-blue-100">
                             Consultation et administration des comptes
                         </p>
                     </div>
 
                     <Link
-                         href={route('admin.users.create')}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-center text-white hover:bg-blue-700"
+                        href={route('admin.users.create')}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-blue-700 shadow transition hover:bg-blue-50"
                     >
-                        + Nouvel utilisateur
+                        <i className="fa-solid fa-user-plus"></i>
+                        Nouvel utilisateur
                     </Link>
-                </div>
-                <div className="mb-6 rounded-xl bg-white p-4 shadow">
+                </section>
+
+                {/* Recherche */}
+                <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
                     <label
                         htmlFor="user-search"
                         className="mb-2 block text-sm font-semibold text-gray-700"
@@ -70,162 +93,203 @@ export default function Index({
                         Rechercher un utilisateur
                     </label>
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="relative">
+                        <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
                         <input
                             id="user-search"
                             type="search"
                             value={search}
                             onChange={(event) =>
                                 setSearch(event.target.value)
-                        }
-                            placeholder="Saisir le nom de l’utilisateur..."
+                            }
+                            placeholder="Nom de l’utilisateur..."
                             autoComplete="off"
-                            className="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="w-full rounded-xl border-gray-300 py-2.5 pl-11 pr-11 focus:border-blue-500 focus:ring-blue-500"
                         />
 
                         {search && (
                             <button
                                 type="button"
                                 onClick={() => setSearch('')}
-                                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                                title="Effacer la recherche"
+                                aria-label="Effacer la recherche"
+                                className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
                             >
-                                Effacer
+                                <i className="fa-solid fa-xmark"></i>
                             </button>
                         )}
                     </div>
-                </div>
+                </section>
 
-                <div className="overflow-hidden rounded-xl bg-white shadow">
+                {/* Liste des utilisateurs */}
+                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-5">
+                        <div>
+                            <h2 className="font-bold text-gray-900">
+                                Utilisateurs
+                            </h2>
+
+                            <p className="text-sm text-gray-500">
+                                {users?.total ?? userList.length}{' '}
+                                compte(s)
+                            </p>
+                        </div>
+
+                        {search && (
+                            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                                Recherche active
+                            </span>
+                        )}
+                    </div>
+
                     {userList.length === 0 ? (
-                        <p className="p-8 text-center text-gray-500">
-                            {search
-                                ? `Aucun utilisateur trouvé pour « ${search} ».`
-                                : 'Aucun utilisateur disponible.'}
-                        </p>
+                        <div className="px-4 py-10 text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                                <i className="fa-solid fa-users text-xl"></i>
+                            </div>
+
+                            <p className="mt-3 font-semibold text-gray-900">
+                                Aucun utilisateur
+                            </p>
+
+                            <p className="mt-1 text-sm text-gray-500">
+                                {search
+                                    ? `Aucun résultat pour « ${search} ».`
+                                    : 'Aucun compte utilisateur disponible.'}
+                            </p>
+                        </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[800px]">
-                                <thead className="bg-gray-100">
-                                    <tr>
-                                        <th className="p-3 text-left">
-                                            Utilisateur
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            E-mail
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Téléphone
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Rôle
-                                        </th>
-                                        <th className="p-3 text-left">
-                                            Statut
-                                        </th>
-                                        <th className="p-3 text-center">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
+                        <div className="divide-y divide-gray-100">
+                            {userList.map((user) => (
+                                <div
+                                    key={user.id}
+                                    className="grid gap-3 px-4 py-4 transition hover:bg-gray-50 md:grid-cols-[minmax(180px,1.3fr)_minmax(180px,1fr)_minmax(130px,auto)_auto_auto] md:items-center sm:px-5"
+                                >
+                                    {/* Identité */}
+                                    <div className="flex min-w-0 items-center gap-3">
+                                        {user.photo ? (
+                                            <img
+                                                src={`/storage/${user.photo}`}
+                                                alt={user.name}
+                                                className="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover"
+                                            />
+                                        ) : (
+                                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
+                                                {user.name
+                                                    ?.charAt(0)
+                                                    .toUpperCase() ??
+                                                    'U'}
+                                            </div>
+                                        )}
 
-                                <tbody>
-                                    {userList.map((user) => (
-                                        <tr
-                                            key={user.id}
-                                            className="border-t hover:bg-gray-50"
-                                        >
-                                            <td className="p-3">
-                                                <div className="flex items-center gap-3">
-                                                    {user.photo ? (
-                                                        <img
-                                                            src={`/storage/${user.photo}`}
-                                                            alt={user.name}
-                                                            className="h-10 w-10 rounded-full border object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-700">
-                                                            {user.name
-                                                                ?.charAt(0)
-                                                                .toUpperCase()}
-                                                        </div>
-                                                    )}
+                                        <div className="min-w-0">
+                                            <p className="truncate font-semibold text-gray-900">
+                                                {user.name}
+                                            </p>
 
-                                                    <span className="font-semibold">
-                                                        {user.name}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            <td className="p-3">
+                                            <p className="truncate text-xs text-gray-500 md:hidden">
                                                 {user.email}
-                                            </td>
+                                            </p>
+                                        </div>
+                                    </div>
 
-                                            <td className="p-3">
-                                                {user.telephone ??
-                                                    'Non renseigné'}
-                                            </td>
+                                    {/* Coordonnées */}
+                                    <div className="hidden min-w-0 md:block">
+                                        <p className="truncate text-sm text-gray-700">
+                                            <i className="fa-solid fa-envelope mr-2 text-gray-400"></i>
+                                            {user.email}
+                                        </p>
 
-                                            <td className="p-3">
-                                                {user.role?.nom ??
-                                                    'Sans rôle'}
-                                            </td>
+                                        <p className="mt-1 truncate text-xs text-gray-500">
+                                            <i className="fa-solid fa-phone mr-2 text-gray-400"></i>
 
-                                            <td className="p-3">
-                                                {user.is_active ? (
-                                                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                                                        Actif
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
-                                                        Inactif
-                                                    </span>
-                                                )}
-                                            </td>
+                                            {user.telephone ??
+                                                'Non renseigné'}
+                                        </p>
+                                    </div>
 
-                                            <td className="p-3">
-                                                <div className="flex justify-center gap-2">
-                                                    <Link
-                                                        href={route(
-                                                            'users.profile.show',
-                                                            user.id
-                                                        )}
-                                                        className="rounded-lg bg-green-600 px-3 py-2 text-sm text-white hover:bg-green-700"
-                                                    >
-                                                        <i className="fa-mosaic fa-solid fa-circle-user"></i>
-                                                    </Link>
+                                    {/* Rôle */}
+                                    <div>
+                                        <span
+                                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${roleColor(
+                                                user.role?.nom
+                                            )}`}
+                                        >
+                                            {user.role?.nom ??
+                                                'Sans rôle'}
+                                        </span>
+                                    </div>
 
-                                                    <Link
-                                                        href={route(
-                                                            'admin.users.edit',
-                                                            user.id
-                                                            )}
-                                                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700"
-                                                    >
-                                                    <i className="fa-solid fa-pen-to-square"></i>
-                                                </Link>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    {/* Statut */}
+                                    <div>
+                                        <span
+                                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                                                user.is_active
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : 'bg-red-100 text-red-700'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`h-2 w-2 rounded-full ${
+                                                    user.is_active
+                                                        ? 'bg-emerald-500'
+                                                        : 'bg-red-500'
+                                                }`}
+                                            ></span>
+
+                                            {user.is_active
+                                                ? 'Actif'
+                                                : 'Inactif'}
+                                        </span>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="flex gap-2 md:justify-end">
+                                        <Link
+                                            href={route(
+                                                'users.profile.show',
+                                                user.id
+                                            )}
+                                            title="Consulter le profil"
+                                            aria-label={`Consulter le profil de ${user.name}`}
+                                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition hover:bg-emerald-600 hover:text-white"
+                                        >
+                                            <i className="fa-solid fa-circle-user"></i>
+                                        </Link>
+
+                                        <Link
+                                            href={route(
+                                                'admin.users.edit',
+                                                user.id
+                                            )}
+                                            title="Modifier l’utilisateur"
+                                            aria-label={`Modifier ${user.name}`}
+                                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700 transition hover:bg-blue-600 hover:text-white"
+                                        >
+                                            <i className="fa-solid fa-pen-to-square"></i>
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     )}
-                </div>
+                </section>
 
                 {/* Pagination */}
                 {users?.links?.length > 3 && (
-                    <div className="mt-6 flex flex-wrap justify-center gap-2">
+                    <nav className="flex flex-wrap justify-center gap-2">
                         {users.links.map((link, index) =>
                             link.url ? (
                                 <Link
                                     key={index}
                                     href={link.url}
+                                    preserveState
                                     preserveScroll
-                                    className={`rounded-lg border px-3 py-2 text-sm ${
+                                    className={`rounded-xl border px-3 py-2 text-sm transition ${
                                         link.active
                                             ? 'border-blue-600 bg-blue-600 text-white'
-                                            : 'border-gray-300 bg-white hover:bg-gray-50'
+                                            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                     }`}
                                     dangerouslySetInnerHTML={{
                                         __html: link.label,
@@ -234,14 +298,14 @@ export default function Index({
                             ) : (
                                 <span
                                     key={index}
-                                    className="cursor-not-allowed rounded-lg border px-3 py-2 text-sm text-gray-400"
+                                    className="cursor-not-allowed rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-400"
                                     dangerouslySetInnerHTML={{
                                         __html: link.label,
                                     }}
                                 />
                             )
                         )}
-                    </div>
+                    </nav>
                 )}
             </div>
         </>

@@ -5,195 +5,258 @@ export default function Dashboard({
     stats = {},
     recentInterventions = [],
 }) {
+    const statCards = [
+        {
+            label: 'Total',
+            value: stats.total ?? 0,
+            icon: 'fa-solid fa-folder-open',
+            iconColor: 'text-gray-700',
+            iconBackground: 'bg-gray-100',
+        },
+        {
+            label: 'En attente',
+            value: stats.pending ?? 0,
+            icon: 'fa-solid fa-clock',
+            iconColor: 'text-amber-600',
+            iconBackground: 'bg-amber-100',
+        },
+        {
+            label: 'En cours',
+            value: stats.in_progress ?? 0,
+            icon: 'fa-solid fa-spinner',
+            iconColor: 'text-blue-600',
+            iconBackground: 'bg-blue-100',
+        },
+        {
+            label: 'Terminées',
+            value: stats.completed ?? 0,
+            icon: 'fa-solid fa-circle-check',
+            iconColor: 'text-emerald-600',
+            iconBackground: 'bg-emerald-100',
+        },
+    ];
+
     function statusColor(status) {
         switch (status) {
             case 'En attente':
-                return 'bg-yellow-100 text-yellow-800';
+                return 'bg-amber-100 text-amber-700';
 
             case 'En cours':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-blue-100 text-blue-700';
 
             case 'Terminée':
-                return 'bg-green-100 text-green-800';
+                return 'bg-emerald-100 text-emerald-700';
+
+            case 'Annulée':
+                return 'bg-red-100 text-red-700';
+
+            case 'Planifiée':
+                return 'bg-purple-100 text-purple-700';
 
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-700';
         }
     }
 
     return (
         <>
-            <Head title="Dashboard Client" />
+            <Head title="Tableau de bord Client" />
 
-            <div className="p-4 sm:p-6">
-                <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h1 className="text-2xl font-bold sm:text-3xl">
-                        Tableau de bord Client
-                    </h1>
+            <div className="mx-auto w-full max-w-7xl space-y-6">
+                {/* En-tête */}
+                <section className="flex flex-col gap-3 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 p-5 text-white shadow-lg sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p className="text-sm text-cyan-100">
+                            Vue d’ensemble
+                        </p>
+
+                        <h1 className="mt-1 text-2xl font-bold">
+                            Tableau de bord
+                        </h1>
+
+                        <p className="mt-1 text-sm text-cyan-100">
+                            Consultez et suivez rapidement vos demandes.
+                        </p>
+                    </div>
 
                     <Link
-                        href={route('client.interventions.create')}
-                        className="rounded-lg bg-blue-600 px-4 py-2 text-center font-semibold text-white hover:bg-blue-700"
+                        href={route(
+                            'client.interventions.create'
+                        )}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-cyan-700 shadow transition hover:bg-cyan-50"
                     >
-                        + Nouvelle intervention
+                        <i className="fa-solid fa-plus"></i>
+                        Nouvelle demande
                     </Link>
-                </div>
+                </section>
 
                 {/* Statistiques */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-xl border-l-4 border-gray-500 bg-white p-6 shadow">
-                        <h2 className="text-gray-500">
-                            Total des demandes
-                        </h2>
+                <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    {statCards.map((card) => (
+                        <div
+                            key={card.label}
+                            className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                            <div
+                                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${card.iconBackground} ${card.iconColor}`}
+                            >
+                                <i className={card.icon}></i>
+                            </div>
 
-                        <p className="mt-2 text-3xl font-bold">
-                            {stats.total ?? 0}
-                        </p>
-                    </div>
+                            <div className="min-w-0">
+                                <p className="truncate text-xs font-medium text-gray-500 sm:text-sm">
+                                    {card.label}
+                                </p>
 
-                    <div className="rounded-xl border-l-4 border-yellow-500 bg-white p-6 shadow">
-                        <h2 className="text-gray-500">
-                            En attente
-                        </h2>
-
-                        <p className="mt-2 text-3xl font-bold text-yellow-600">
-                            {stats.pending ?? 0}
-                        </p>
-                    </div>
-
-                    <div className="rounded-xl border-l-4 border-blue-500 bg-white p-6 shadow">
-                        <h2 className="text-gray-500">
-                            En cours
-                        </h2>
-
-                        <p className="mt-2 text-3xl font-bold text-blue-600">
-                            {stats.in_progress ?? 0}
-                        </p>
-                    </div>
-
-                    <div className="rounded-xl border-l-4 border-green-500 bg-white p-6 shadow">
-                        <h2 className="text-gray-500">
-                            Terminées
-                        </h2>
-
-                        <p className="mt-2 text-3xl font-bold text-green-600">
-                            {stats.completed ?? 0}
-                        </p>
-                    </div>
-                </div>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {card.value}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </section>
 
                 {/* Interventions récentes */}
-                <div className="mt-8 rounded-xl bg-white p-4 shadow sm:p-6">
-                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <h2 className="text-xl font-bold">
-                            Mes demandes récentes
-                        </h2>
+                <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-4 py-4 sm:px-5">
+                        <div>
+                            <h2 className="font-bold text-gray-900 sm:text-lg">
+                                Demandes récentes
+                            </h2>
+
+                            <p className="hidden text-sm text-gray-500 sm:block">
+                                Vos dernières interventions enregistrées
+                            </p>
+                        </div>
 
                         <Link
-                            href={route('client.interventions.index')}
-                            className="text-sm text-blue-600 hover:underline"
+                            href={route(
+                                'client.interventions.index'
+                            )}
+                            className="inline-flex items-center gap-2 text-sm font-semibold text-cyan-600 hover:text-cyan-700"
                         >
-                            Toutes mes interventions
+                            Tout voir
+                            <i className="fa-solid fa-arrow-right text-xs"></i>
                         </Link>
                     </div>
 
                     {recentInterventions.length === 0 ? (
-                        <div className="py-8 text-center">
-                            <p className="mb-4 text-gray-500">
-                                Vous n’avez créé aucune intervention.
+                        <div className="px-4 py-10 text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-100 text-cyan-600">
+                                <i className="fa-solid fa-folder-open text-xl"></i>
+                            </div>
+
+                            <h3 className="mt-3 font-semibold text-gray-900">
+                                Aucune demande
+                            </h3>
+
+                            <p className="mt-1 text-sm text-gray-500">
+                                Vous n’avez encore créé aucune intervention.
                             </p>
 
                             <Link
                                 href={route(
                                     'client.interventions.create'
                                 )}
-                                className="inline-block rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-700"
                             >
-                                Créer ma première demande
+                                <i className="fa-solid fa-plus"></i>
+                                Créer une demande
                             </Link>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[750px]">
-                                <thead>
-                                    <tr className="border-b bg-gray-50 text-left">
-                                        <th className="p-3">Référence</th>
-                                        <th className="p-3">Titre</th>
-                                        <th className="p-3">Catégorie</th>
-                                        <th className="p-3">Priorité</th>
-                                        <th className="p-3">Statut</th>
-                                        <th className="p-3">
-                                            Technicien
-                                        </th>
-                                        <th className="p-3">Action</th>
-                                    </tr>
-                                </thead>
+                        <div className="divide-y divide-gray-100">
+                            {recentInterventions.map(
+                                (intervention) => (
+                                    <div
+                                        key={intervention.id}
+                                        className="grid gap-3 px-4 py-4 transition hover:bg-gray-50 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-center sm:px-5"
+                                    >
+                                        {/* Informations principales */}
+                                        <div className="min-w-0">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="text-xs font-semibold text-cyan-600">
+                                                    {
+                                                        intervention.reference
+                                                    }
+                                                </span>
 
-                                <tbody>
-                                    {recentInterventions.map(
-                                        (intervention) => (
-                                            <tr
-                                                key={intervention.id}
-                                                className="border-b hover:bg-gray-50"
-                                            >
-                                                <td className="p-3 font-semibold">
-                                                    {intervention.reference}
-                                                </td>
-
-                                                <td className="p-3">
-                                                    {intervention.titre}
-                                                </td>
-
-                                                <td className="p-3">
-                                                    {intervention.category
+                                                <span
+                                                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusColor(
+                                                        intervention
+                                                            .status
+                                                            ?.nom
+                                                    )}`}
+                                                >
+                                                    {intervention
+                                                        .status
                                                         ?.nom ??
-                                                        'Non définie'}
-                                                </td>
+                                                        'Non défini'}
+                                                </span>
+                                            </div>
 
-                                                <td className="p-3">
-                                                    {intervention.priority
+                                            <p className="mt-1 truncate font-semibold text-gray-900">
+                                                {
+                                                    intervention.titre
+                                                }
+                                            </p>
+
+                                            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+                                                <span>
+                                                    <i className="fa-solid fa-tag mr-1"></i>
+
+                                                    {intervention
+                                                        .category
                                                         ?.nom ??
-                                                        'Non définie'}
-                                                </td>
+                                                        'Sans catégorie'}
+                                                </span>
 
-                                                <td className="p-3">
-                                                    <span
-                                                        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusColor(
-                                                            intervention
-                                                                .status?.nom
-                                                        )}`}
-                                                    >
-                                                        {intervention.status
-                                                            ?.nom ??
-                                                            'Non défini'}
-                                                    </span>
-                                                </td>
+                                                <span>
+                                                    <i className="fa-solid fa-user-gear mr-1"></i>
 
-                                                <td className="p-3">
-                                                    {intervention.technician
+                                                    {intervention
+                                                        .technician
                                                         ?.name ??
                                                         'Non attribué'}
-                                                </td>
+                                                </span>
+                                            </div>
+                                        </div>
 
-                                                <td className="p-3">
-                                                    <Link
-                                                        href={route(
-                                                            'client.interventions.show',
-                                                            intervention.id
-                                                        )}
-                                                        className="text-blue-600 hover:underline"
-                                                    >
-                                                        Voir
-                                                    </Link>
-                                                </td>
-                                            </tr>
-                                        )
-                                    )}
-                                </tbody>
-                            </table>
+                                        {/* Priorité */}
+                                        <div className="text-sm">
+                                            <span className="text-gray-500">
+                                                Priorité :
+                                            </span>{' '}
+
+                                            <span className="font-semibold text-gray-800">
+                                                {intervention
+                                                    .priority
+                                                    ?.nom ??
+                                                    'Non définie'}
+                                            </span>
+                                        </div>
+
+                                        {/* Action */}
+                                        <Link
+                                            href={route(
+                                                'client.interventions.show',
+                                                intervention.id
+                                            )}
+                                            title="Consulter l’intervention"
+                                            className="inline-flex h-9 items-center justify-center gap-2 rounded-xl bg-cyan-50 px-3 text-sm font-semibold text-cyan-700 transition hover:bg-cyan-600 hover:text-white"
+                                        >
+                                            <i className="fa-solid fa-eye"></i>
+
+                                            <span className="sm:hidden">
+                                                Consulter
+                                            </span>
+                                        </Link>
+                                    </div>
+                                )
+                            )}
                         </div>
                     )}
-                </div>
+                </section>
             </div>
         </>
     );
