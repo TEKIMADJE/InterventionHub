@@ -42,18 +42,6 @@ class CommentController extends Controller
 
         $authorId = (int) $request->user()->id;
 
-        $administratorsAndManagers = User::whereHas(
-            'role',
-                function ($query) {
-                    $query->whereIn('nom', [
-                        'Administrateur',
-                        'Responsable technique',
-                    ]);
-                }
-            )
-                ->where('is_active', true)
-                ->get();
-
 $author = $request->user();
 $author->loadMissing('role');
 
@@ -102,12 +90,6 @@ Notification::send(
     $recipients,
     new NewCommentNotification($comment)
 );
-
-Notification::send(
-    $recipients,
-    new NewCommentNotification($comment)
-);
-
         return back()->with(
             'success',
             'Commentaire ajouté avec succès.'
