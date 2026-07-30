@@ -178,6 +178,10 @@ public function update(Request $request, Intervention $intervention)
         'status_id' => 'required|exists:statuses,id',
     ]);
 
+    if (!empty($validated['technician_id'])) {
+    $validated['assigned_by'] = auth()->id();
+    }
+
     $oldTechnicianId = $intervention->technician_id;
     $oldTechnician = $intervention->technician?->name ?? 'Non affecté';
     $oldStatus = $intervention->status?->nom ?? 'Aucun';
