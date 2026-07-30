@@ -55,5 +55,17 @@ jobs:
       - name: Exécuter les tests Laravel
         run: php artisan test --do-not-cache-result
 
+      - name: Installer les dépendances JavaScript
+        run: npm ci
+
+      - name: Auditer les dépendances PHP
+        run: composer audit --locked
+
+      - name: Auditer les dépendances JavaScript
+        run: npm audit
+
       - name: Compiler le frontend
         run: npm run build
+
+      - name: Exécuter les tests Laravel
+        run: php artisan test --do-not-cache-result
