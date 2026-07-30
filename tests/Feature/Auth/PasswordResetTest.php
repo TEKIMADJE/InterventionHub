@@ -15,7 +15,11 @@ test('reset password link can be requested', function () {
 
     $user = User::factory()->create();
 
-    $this->post('/forgot-password', ['email' => $user->email]);
+    $response = $this->post('/forgot-password', [
+    'email' => $user->email,
+    ]);
+
+    $response->assertSessionHasNoErrors();
 
     Notification::assertSentTo($user, ResetPasswordNotification::class);
 });
@@ -57,4 +61,19 @@ test('password can be reset with valid token', function () {
 
         return true;
     });
+});
+test('user sends the custom reset password notification', function () {
+    Notification::fake();
+
+    $user = User::factory()->create();
+
+    $user->sendPasswordResetNotification('test-token');
+
+    Notification::assertSentTo(
+        $user,
+        ResetPasswordNotification::class,
+        function ($notification) {
+            return $notification->token === 'test-token';
+        }
+    );
 });

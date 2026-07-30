@@ -10,9 +10,8 @@ class ResetPasswordNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(
-        public string $token
-    ) {
+    public function __construct(public string $token)
+    {
     }
 
     public function via(object $notifiable): array
@@ -20,44 +19,21 @@ class ResetPasswordNotification extends Notification
         return ['mail'];
     }
 
-    public function toMail(
-        object $notifiable
-    ): MailMessage {
-        $expiration = config(
-            'auth.passwords.'
-            .config('auth.defaults.passwords')
-            .'.expire',
-            60
-        );
-
-        $resetUrl = route('password.reset', [
+    public function toMail(object $notifiable): MailMessage
+    {
+        $url = route('password.reset', [
             'token' => $this->token,
-            'email' => $notifiable
-                ->getEmailForPasswordReset(),
+            'email' => $notifiable->getEmailForPasswordReset(),
         ]);
 
-        return (new MailMessage)
-            ->subject(
-                'Réinitialisation de votre mot de passe - InterventionHub'
-            )
-            ->greeting(
-                'Bonjour '.$notifiable->name.' !'
-            )
+        return (new MailMessage())
+            ->subject('Réinitialisation de votre mot de passe')
             ->line(
-                'Nous avons reçu une demande de réinitialisation du mot de passe de votre compte.'
+                'Vous recevez cet email parce qu’une demande de réinitialisation a été effectuée.'
             )
-            ->action(
-                'Réinitialiser mon mot de passe',
-                $resetUrl
-            )
+            ->action('Réinitialiser le mot de passe', $url)
             ->line(
-                "Ce lien expirera dans {$expiration} minutes."
-            )
-            ->line(
-                'Si vous n’êtes pas à l’origine de cette demande, aucune action n’est nécessaire.'
-            )
-            ->salutation(
-                'L’équipe InterventionHub'
+                'Si vous n’avez pas demandé cette réinitialisation, ignorez cet email.'
             );
     }
 }
