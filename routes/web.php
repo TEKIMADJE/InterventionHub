@@ -253,16 +253,21 @@ Route::middleware('auth')->group(function () {
     Route::post(
         '/interventions/{intervention}/comments',
         [CommentController::class, 'store']
-    )->name('comments.store');
+    )->middleware('verified')
+    ->name('comments.store');
 
     Route::delete(
         '/comments/{comment}',
         [CommentController::class, 'destroy']
-        )->name('comments.destroy');
+        )->middleware('verified')
+        ->name('comments.destroy');
 }   );
 
 //ATTACHEMENT
-Route::middleware('auth')->group(function () {
+Route::middleware([
+    'auth',
+    'verified',
+])->group(function () {
     Route::post(
         '/interventions/{intervention}/attachments',
         [InterventionAttachmentController::class, 'store']
