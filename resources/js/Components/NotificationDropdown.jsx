@@ -1,5 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Link, router, usePage, } from '@inertiajs/react';
+import { useEffect, useRef, useState, } from 'react';
 
 export default function NotificationDropdown({
     readRouteName,
@@ -7,16 +7,100 @@ export default function NotificationDropdown({
     const { auth } = usePage().props;
 
     const [open, setOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    function refreshNotifications() {
+        if (document.visibilityState !== 'visible') {
+            return;
+        }
+
+        router.reload({
+            only: ['auth'],
+            preserveScroll: true,
+            preserveState: true,
+            showProgress: false,
+        });
+    }
+
+    useEffect(() => {
+        const interval = window.setInterval(
+            refreshNotifications,
+            10000
+        );
+
+        document.addEventListener(
+            'visibilitychange',
+            refreshNotifications
+        );
+
+        return () => {
+            window.clearInterval(interval);
+
+            document.removeEventListener(
+                'visibilitychange',
+                refreshNotifications
+            );
+        };
+    },[]);
+    useEffect(() => {
+    function handleOutsideClick(event) {
+        if (
+            dropdownRef.current &&
+            !dropdownRef.current.contains(event.target)
+        ) {
+            setOpen(false);
+        }
+    }
+
+    function handleEscape(event) {
+        if (event.key === 'Escape') {
+            setOpen(false);
+        }
+    }
+
+    document.addEventListener(
+        'mousedown',
+        handleOutsideClick
+    );
+
+    document.addEventListener(
+        'keydown',
+        handleEscape
+    );
+
+    return () => {
+        document.removeEventListener(
+            'mousedown',
+            handleOutsideClick
+        );
+
+        document.removeEventListener(
+            'keydown',
+            handleEscape
+        );
+    };
+},
+[]);
+
+    function toggleDropdown() {
+        const willOpen = !open;
+
+        setOpen(willOpen);
+
+            if (willOpen) {
+                refreshNotifications();
+            }
+    }
 
     const notifications = auth?.notifications ?? [];
     const unreadCount =
         auth?.unreadNotificationsCount ?? 0;
 
     return (
-        <div className="relative">
+        <div ref={dropdownRef} className="relative">
             <button
                 type="button"
-                onClick={() => setOpen(!open)}
+                onClick={toggleDropdown}
                 className="relative rounded-full p-2 text-2xl hover:bg-gray-100"
                 aria-label="Afficher les notifications"
             >
