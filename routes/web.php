@@ -62,7 +62,11 @@ Route::get('/dashboard', function () {
 })->middleware('auth')->name('dashboard');
 
 // ADMIN
-Route::middleware(['auth', 'role:Administrateur'])
+Route::middleware([
+    'auth',
+    'verified',
+    'role:Administrateur',
+])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -75,8 +79,6 @@ Route::middleware(['auth', 'role:Administrateur'])
 
 
         Route::resource('interventions', InterventionController::class);
-
-        Route::middleware(['auth','verified','role:Administrateur',]);
 
         Route::patch(
             '/notifications/{notification}/read',
@@ -102,19 +104,17 @@ Route::middleware(['auth', 'role:Administrateur'])
 
 
 // MANAGER
-Route::middleware(['auth', 'role:Responsable technique'])
+Route::middleware([
+    'auth',
+    'verified',
+    'role:Responsable technique',
+])
     ->prefix('manager')
     ->name('manager.')
     ->group(function () {
 
         Route::get('/dashboard', [ManagerDashboardController::class, 'index'])
             ->name('dashboard');
-
-        Route::middleware([
-            'auth',
-            'verified',
-            'role:Responsable technique',
-        ]);
 
         Route::resource(
                 'interventions',
@@ -150,20 +150,17 @@ Route::middleware(['auth', 'role:Responsable technique'])
 
 
 // TECHNICIEN
-Route::middleware(['auth', 'role:Technicien'])
+Route::middleware([
+    'auth',
+    'verified',
+    'role:Technicien',
+])
     ->prefix('technician')
     ->name('technician.')
     ->group(function () {
 
         Route::get('/dashboard', [TechnicianDashboardController::class, 'index'])
             ->name('dashboard');
-
-        Route::middleware([
-            'auth',
-            'verified',
-            'role:Technicien',
-        ]);
-
 
         Route::resource(
             'interventions',
@@ -197,19 +194,17 @@ Route::middleware(['auth', 'role:Technicien'])
 
 
 // CLIENT
-Route::middleware(['auth', 'role:Client'])
+Route::middleware([
+    'auth',
+    'verified',
+    'role:Client',
+])
     ->prefix('client')
     ->name('client.')
     ->group(function () {
 
         Route::get('/dashboard', [ClientDashboardController::class, 'index'])
             ->name('dashboard');
-
-        Route::middleware([
-            'auth',
-            'verified',
-            'role:Client',
-        ]);
 
         Route::resource('interventions', ClientInterventionController::class)
     ->only([
