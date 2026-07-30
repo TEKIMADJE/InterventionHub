@@ -11,7 +11,7 @@ class ResetPasswordNotification extends Notification
     use Queueable;
 
     public function __construct(
-        private string $token
+        public string $token
     ) {
     }
 

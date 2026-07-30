@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Role;
 use App\Models\User;
 
 test('login screen can be rendered', function () {
@@ -8,16 +9,22 @@ test('login screen can be rendered', function () {
     $response->assertStatus(200);
 });
 
-test('users can authenticate using the login screen', function () {
-    $user = User::factory()->create();
+test('users can authenticate and are redirected according to their role', function () {
+    $clientRole = Role::create([
+        'nom' => 'Client',
+    ]);
+
+    $user = User::factory()->create([
+        'role_id' => $clientRole->id,
+    ]);
 
     $response = $this->post('/login', [
         'email' => $user->email,
         'password' => 'password',
     ]);
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('client.dashboard'));
 });
 
 test('users can not authenticate with invalid password', function () {
