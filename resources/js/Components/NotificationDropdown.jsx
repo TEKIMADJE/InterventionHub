@@ -114,7 +114,7 @@ export default function NotificationDropdown({
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-2 w-96 overflow-hidden rounded-xl border bg-white shadow-xl">
+                <div className="fixed inset-x-4 top-20 z-50 overflow-hidden rounded-xl border bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96">
                     <div className="border-b px-4 py-3">
                         <h2 className="font-bold">
                             Notifications
@@ -126,7 +126,7 @@ export default function NotificationDropdown({
                         </p>
                     </div>
 
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto sm:max-h-96">
                         {notifications.length === 0 ? (
                             <p className="p-6 text-center text-sm text-gray-500">
                                 Aucune notification
@@ -155,7 +155,7 @@ export default function NotificationDropdown({
                                                 'Nouvelle notification'}
                                         </p>
 
-                                        <p className="mt-1 text-sm text-gray-600">
+                                        <p className="mt-1 break-words text-sm text-gray-600">
                                             {notification
                                                 .data
                                                 ?.message ??
